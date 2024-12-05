@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const os = require('os');
 const path = require('path');
 const express = require('express');
@@ -8,6 +8,7 @@ const EventEmitter = require('events');
 require("./utils/rust-utils");
 require("./utils/git-utils");
 require("./utils/build-utils");
+require("./utils/url-utils");
 
 class MainProcessEmitter extends EventEmitter {}
 const mainEmitter = new MainProcessEmitter();

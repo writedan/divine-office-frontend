@@ -17,6 +17,9 @@ declare global {
 
       // utils/build-utils.js
       rebuildFrontend: () => { success: boolean; error?: string };
+
+      // utils/url-utils.js
+      openLink: (url: string) => void;
     };
   }
 }

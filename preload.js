@@ -15,4 +15,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	// utils/build-utils.js
 	rebuildFrontend: () => ipcRenderer.invoke('rebuild-frontend'),
+
+	// utils/url-utils.js
+	openLink: (url) => ipcRenderer.invoke('open-link', url),
 });
