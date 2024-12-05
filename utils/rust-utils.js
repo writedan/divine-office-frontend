@@ -7,6 +7,7 @@ const {
     isMusl
 } = require('detect-libc');
 const { logMessage } = require("./message-utils");
+const { exec } = require("child_process");
 
 function getTripleTarget() {
     const platform = process.platform;
