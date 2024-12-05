@@ -10,6 +10,9 @@ declare global {
 
       // utils/git-utils.js
       updateRepo: (repoPath: string, dirPath: string, branch?: string) => { success: boolean error?: string };
+
+      // utils/build-utils.js
+      rebuildFrontend: () => { success: boolean; error?: string };
     };
   }
 }

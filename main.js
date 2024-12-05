@@ -6,6 +6,7 @@ const portfinder = require('portfinder');
 
 require("./utils/rust-utils");
 require("./utils/git-utils");
+require("./utils/build-utils");
 
 let mainWindow;
 let server;
