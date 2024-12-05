@@ -5,10 +5,102 @@ const process = require('process');
 const { isMusl } = require('detect-libc');
 const express = require('express');
 const portfinder = require('portfinder');
-const { exec } = require('child_process');
+const { exec, execSync, spawn } = require('child_process');
 const fs = require('fs');
 const https = require('https');
+const simpleGit = require('simple-git');
+const ts = require("typescript");
+const { build } = require("vite");
 
+async function setupAndBuildProject() {
+    const git = simpleGit();
+    const repoURL = 'https://github.com/writedan/divine-office-frontend';
+
+    try {
+        // Check if the current directory is already a Git repository
+        const isRepo = await git.checkIsRepo();
+        if (!isRepo) {
+            console.log("Initializing new Git repository...");
+            await git.init(); // Initialize as a Git repository
+            await git.addRemote('origin', repoURL); // Set the remote repository
+            console.log(`Repository initialized and linked to ${repoURL}.`);
+        } else {
+            console.log("Directory is already a Git repository.");
+        }
+
+        // Run the build process
+        console.log("Starting the build process...");
+        await buildProject();
+    } catch (err) {
+        console.error("Error during setup or build:", err);
+    }
+};
+
+ipcMain.handle('build-frontend', async () => {
+  return await setupAndBuildProject();
+});
+
+function buildTypeScript() {
+    const configPath = ts.findConfigFile(
+        "./",
+        ts.sys.fileExists,
+        "tsconfig.json"
+    );
+    if (!configPath) {
+        throw new Error("Could not find tsconfig.json");
+    }
+
+    const config = ts.readConfigFile(configPath, ts.sys.readFile);
+    const parsedCommandLine = ts.parseJsonConfigFileContent(
+        config.config,
+        ts.sys,
+        "./"
+    );
+
+    const program = ts.createProgram({
+        rootNames: parsedCommandLine.fileNames,
+        options: parsedCommandLine.options,
+    });
+
+    const emitResult = program.emit();
+    const allDiagnostics = ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics);
+
+    allDiagnostics.forEach(diagnostic => {
+        const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+        const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+        console.error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
+    });
+
+    if (emitResult.emitSkipped) {
+        throw new Error("TypeScript compilation failed.");
+    }
+
+    console.log("TypeScript build completed successfully.");
+}
+
+async function buildVite() {
+    try {
+        await build(); // This assumes your `vite.config.js` is in the root directory.
+        console.log("Vite build completed successfully.");
+    } catch (err) {
+        console.error("Vite build failed:", err);
+        throw err;
+    }
+}
+
+async function buildProject() {
+    try {
+        console.log("Building TypeScript...");
+        buildTypeScript();
+
+        console.log("Building Vite...");
+        await buildVite();
+
+        console.log("Build process completed successfully.");
+    } catch (err) {
+        console.error("Build process failed:", err);
+    }
+}
 
 ipcMain.handle('rust-triple-target', async () => {
   const platform = process.platform;
@@ -51,6 +143,7 @@ ipcMain.handle('is-cargo-installed', async () => {
 function downloadRustup(targetTriple, destinationPath) {
   return new Promise((resolve, reject) => {
     const url = `https://static.rust-lang.org/rustup/dist/${targetTriple}/rustup-init${process.platform === 'win32' ? '.exe' : ''}`;
+    console.log('Saving', url, 'to', destinationPath);
     const file = fs.createWriteStream(destinationPath);
 
     https.get(url, (response) => {
@@ -71,32 +164,56 @@ function downloadRustup(targetTriple, destinationPath) {
 
 function installRustup(installerPath) {
   return new Promise((resolve, reject) => {
-    const command = process.platform === 'win32' ? `"${installerPath}"` : `sh "${installerPath}"`;
+    const command = `${installerPath}`;
+    const args = ['-y'];
+    const installer = spawn(command, args);
 
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        reject(new Error(`Installation failed: ${stderr || stdout}`));
+    installer.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+      mainWindow.webContents.send('install-log', data.toString());
+    });
+
+    installer.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+      mainWindow.webContents.send('install-log', data.toString());
+    });
+
+    installer.on('close', (code) => {
+      if (code === 0) {
+        resolve('Installation completed successfully.');
       } else {
-        resolve(stdout);
+        reject(new Error(`Installation failed with exit code ${code}.`));
       }
     });
   });
+}
+
+
+const makeAppleExecutable = (filePath) => {
+  execSync(`xattr -d com.apple.quarantine ${filePath}`);
+  fs.chmodSync(filePath, 0o755);
+  return { success: true };
 };
 
-ipcMain.handle('install-cargo', async (targetTriple) => {
+ipcMain.handle('install-cargo', async (event, targetTriple) => {
   try {
     const installerPath = path.join(os.tmpdir(), `rustup-init${process.platform === 'win32' ? '.exe' : ''}`);
 
     await downloadRustup(targetTriple, installerPath);
 
     if (process.platform !== 'win32') {
-      fs.chmodSync(installerPath, '755');
+      try {
+        fs.chmodSync(installerPath, 0o755);
+      } catch (err) {
+        return { success: false, error: `Failed to set executable permissions: ${err.message}` };
+      }
     }
 
     await installRustup(installerPath);
 
     return { success: true };
   } catch (error) {
+    console.error(error);
     return { success: false, error: error.message };
   }
 });
@@ -136,3 +253,5 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+app.disableHardwareAcceleration();

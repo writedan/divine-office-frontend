@@ -1,45 +1,72 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
+import './App.css';
+import { FaHome, FaCalendarAlt } from 'react-icons/fa';
+import { NavigationProvider, useNavigation } from './NavigationContext';
+
+import CargoInstall from './CargoInstall';
+
+const HomePage = () => (
+  <>
+    <h1>Welcome to the Divine Office</h1>
+    <p>This is the Home page where you can access the Divine Office prayers.</p>
+  </>
+);
+
+const CalendarPage = () => (
+  <>
+    <h1>Liturgical Calendar</h1>
+    <p>This is the Calendar page where you can view the liturgical calendar and important dates.</p>
+  </>
+);
+
+const BottomNavigation = () => {
+  const { goto } = useNavigation();
+
+  return (
+    <div className="bottom-nav">
+      <button className="nav-item" onClick={() => goto('home')}>
+        <FaHome className="icon" />
+        <span>Home</span>
+      </button>
+      <button className="nav-item" onClick={() => goto('calendar')}>
+        <FaCalendarAlt className="icon" />
+        <span>Calendar</span>
+      </button>
+    </div>
+  );
+};
 
 function App() {
-  const [targetTriple, setTargetTriple] = useState('Loading...');
-  const [cargoInstalled, setCargoInstalled] = useState<string | boolean>('Loading...');
-  const [installing, setInstalling] = useState(false);
-  const [error, setError] = useState<string | null | undefined>(null);
+  const { currentPage } = useNavigation();
 
-  useEffect(() => {
-    const load = async () => {
-      setTargetTriple(await window.electronAPI.getRustTargetTriple());
-      setCargoInstalled(await window.electronAPI.isCargoInstalled());
-    };
-
-    load();
-  }, []);
-
-  const installCargo = async () => {
-    setInstalling(true);
-    setError(null);
-
-    const result = await window.electronAPI.installCargo(targetTriple);
-    if (result.success) {
-      setCargoInstalled(true);
-    } else {
-      setError(result.error);
+  const renderPageContent = () => {
+    switch (currentPage) {
+      case 'cargoinstall':
+        return <CargoInstall />;
+      case 'home':
+        return <HomePage />;
+      case 'calendar':
+        return <CalendarPage />;
+      default:
+        return <HomePage />; 
     }
-
-    setInstalling(false);
   };
 
   return (
-    <div>
-      <p>Rust Target Triple: {targetTriple}</p>
-      <p>Cargo Installed? {typeof cargoInstalled === 'boolean' ? (cargoInstalled ? 'true' : 'false') : cargoInstalled}</p>
-      {!cargoInstalled && !installing && (
-        <button onClick={installCargo}>Install Cargo</button>
-      )}
-      {installing && <p>Installing Cargo...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+    <div className="app">
+      <main className={`app-content ${currentPage}`}>
+        {renderPageContent()}
+      </main>
+
+      {currentPage !== 'cargoinstall' && <BottomNavigation />}
     </div>
   );
 }
 
-export default App;
+const WrappedApp = () => (
+  <NavigationProvider>
+    <App />
+  </NavigationProvider>
+);
+
+export default WrappedApp;
