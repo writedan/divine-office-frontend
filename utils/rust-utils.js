@@ -8,7 +8,6 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 
-
 function getTripleTarget() {
     const platform = process.platform;
     const arch = process.arch;
@@ -34,7 +33,7 @@ function getTripleTarget() {
 
 function isCargoInstalled() {
     return new Promise((resolve) => {
-        exec('cargo --version', (error, stdout) => {
+        exec('cargo --version', { shell: true }, (error, stdout) => {
             if (error) {
                 resolve(false);
             } else {
@@ -70,7 +69,7 @@ function installRustup(installerPath) {
     return new Promise((resolve, reject) => {
         const command = `${installerPath}`;
         const args = ['-y'];
-        const installer = spawn(command, args);
+        const installer = spawn(command, args, { shell: true });
 
         installer.stdout.on('data', (data) => {
             logMessage('cargo-install', `stdout: ${data}`);
