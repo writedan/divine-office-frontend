@@ -9,7 +9,7 @@ declare global {
       installCargo: (targetTriple: string) => { success: boolean; error?: string };
 
       // utils/git-utils.js
-      updateRepo: (repoPath: string, dirPath: string, branch?: string) => void;
+      updateRepo: (repoPath: string, dirPath: string, branch?: string) => { success: boolean error?: string };
     };
   }
 }
