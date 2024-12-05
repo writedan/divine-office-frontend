@@ -1,10 +1,6 @@
 import React from 'react';
-import './App.css';
 import { FaHome, FaCalendarAlt, FaSync } from 'react-icons/fa';
-import { NavigationProvider, useNavigation } from './NavigationContext';
-
-import CargoInstall from './CargoInstall';
-import UpdatePage from './UpdatePage';
+import { NavigationProvider, useNavigation } from './NavigationContext'; 
 
 const HomePage = () => (
   <>
@@ -46,14 +42,10 @@ function App() {
 
   const renderPageContent = () => {
     switch (currentPage) {
-      case 'cargoinstall':
-        return <CargoInstall />;
       case 'home':
         return <HomePage />;
       case 'calendar':
         return <CalendarPage />;
-      case 'update':
-        return <UpdatePage />;
       default:
         return <HomePage />; 
     }
