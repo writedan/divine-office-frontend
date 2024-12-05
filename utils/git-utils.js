@@ -1,0 +1,41 @@
+const { logMessage } = require("./message-utils")
+
+const { simpleGit, CleanOptions } = require('simple-git');
+const fs = require('fs');
+const path = require('path');
+const {
+    ipcMain
+} = require('electron');
+
+async function updateRepo(repoPath, dirPath, branch='master') {
+    try {
+        const git = simpleGit(dirPath);
+
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+
+        if (fs.existsSync(path.join(dirPath, '.git'))) {
+            logMessage('git-log', 'Directory is already a Git repository.');
+
+            // Check if remote origin is set
+            const remotes = await git.getRemotes(true);
+            const origin = remotes.find(remote => remote.name === 'origin');
+            if (origin && origin.refs.fetch === repoPath) {
+                logMessage('git-log', 'Remote origin is set correctly. Pulling latest updates...');
+                await git.pull('origin', branch);
+            } else {
+                logMessage('git-log', `Remote origin does not match the repoPath. Current: ${origin?.refs.fetch || 'none'}`);
+            }
+        } else {
+            logMessage('git-log', 'Directory is not a Git repository. Cloning...');
+            await git.clone(repoPath, dirPath);
+        }
+    } catch (error) {
+        logMessage('git-log', 'An error occurred:', error.message);
+    }
+}
+
+ipcMain.handle('update-repo', async (repoPath, dirPath, branch='master') => {
+    return await updateRepo(repoPath, dirPath, branch);
+})

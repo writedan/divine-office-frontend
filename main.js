@@ -3,7 +3,9 @@ const os = require('os');
 const path = require('path');
 const express = require('express');
 const portfinder = require('portfinder');
+
 require("./utils/rust-utils");
+require("./utils/git-utils");
 
 let mainWindow;
 let server;

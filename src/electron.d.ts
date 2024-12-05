@@ -7,6 +7,9 @@ declare global {
       getRustTripleTarget: () => string;
       isCargoInstalled: () => boolean;
       installCargo: (targetTriple: string) => { success: boolean; error?: string };
+
+      // utils/git-utils.js
+      updateRepo: (repoPath: string, dirPath: string, branch?: string) => void;
     };
   }
 }

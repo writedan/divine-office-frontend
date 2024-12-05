@@ -8,5 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	// c.f. utils/message-utils.js
 	on: (event, listener) => ipcRenderer.on,
-	removeListener: (event, listener) => ipcRenderer.removeListener
+	removeListener: (event, listener) => ipcRenderer.removeListener,
+
+	// utils/git-utils.js
+	updateRepo: (repoPath, dirPath, branch='master') => ipcRenderer.invoke('update-repo', repoPath, dirPath, branch),
 });
