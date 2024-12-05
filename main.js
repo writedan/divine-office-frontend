@@ -3,10 +3,14 @@ const os = require('os');
 const path = require('path');
 const express = require('express');
 const portfinder = require('portfinder');
+const EventEmitter = require('events');
 
 require("./utils/rust-utils");
 require("./utils/git-utils");
 require("./utils/build-utils");
+
+class MainProcessEmitter extends EventEmitter {}
+const mainEmitter = new MainProcessEmitter();
 
 let mainWindow;
 let server;
@@ -45,6 +49,13 @@ app.on('ready', () => {
       });
 
       mainWindow.loadURL(`http://${localIP}:${port}`);
+
+      mainEmitter.on('log-message', (stream, ...args) => {
+        console.log(`[${stream}]`, args);
+        if (mainWindow) {
+          mainWindow.webContents.send(stream, args);
+        }
+      });
     });
   }).catch((err) => {
     console.error('Error finding an available port:', err);
@@ -59,4 +70,4 @@ app.on('window-all-closed', () => {
 
 app.disableHardwareAcceleration();
 
-module.exports = { mainWindow };
+global.mainEmitter = mainEmitter;

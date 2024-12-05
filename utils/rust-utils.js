@@ -27,6 +27,8 @@ function getTripleTarget() {
         target = 'unsupported-platform';
     }
 
+    logMessage('cargo-install', `Identified target ${target}`);
+
     return target;
 }
 

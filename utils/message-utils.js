@@ -1,12 +1,15 @@
-const { mainWindow } = require("../main");
+let messageQueue = [];
 
-const {
-    ipcMain
-} = require('electron');
+const logMessage = (stream, ...args) => {
+  if (global.mainEmitter) {
+    messageQueue.forEach(([stream, ...args]) => {
+      global.mainEmitter.emit('log-message', stream, ...args);
+    });
+    messageQueue = []; 
+    global.mainEmitter.emit('log-message', stream, ...args);
+  } else {
+    messageQueue.push([stream, ...args]);
+  }
+};
 
-function logMessage(stream, ...args) {
-	console.log(`[${stream}]`, ...args);
-	mainWindow.webContents.send(stream, args.join(' '));
-}
-
-module.exports = { logMessage }
+module.exports = { logMessage };
