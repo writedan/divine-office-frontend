@@ -1,13 +1,13 @@
-const {
-    ipcMain
-} = require('electron');
+const { ipcMain } = require('electron');
 const os = require('os');
 const process = require('process');
-const {
-    isMusl
-} = require('detect-libc');
+const { isMusl } = require('detect-libc');
 const { logMessage } = require("./message-utils");
-const { exec } = require("child_process");
+const { exec, spawn } = require("child_process"); 
+const path = require("path");
+const fs = require("fs");
+const https = require("https");
+
 
 function getTripleTarget() {
     const platform = process.platform;
@@ -74,12 +74,10 @@ function installRustup(installerPath) {
 
         installer.stdout.on('data', (data) => {
             logMessage('cargo-install', `stdout: ${data}`);
-            mainWindow.webContents.send('install-log', data.toString());
         });
 
         installer.stderr.on('data', (data) => {
             logMessage('cargo-install', `stderr: ${data}`);
-            logMessage('cargo-install', data.toString());
         });
 
         installer.on('close', (code) => {
@@ -96,7 +94,7 @@ async function installCargo(event, tripleTarget) {
     try {
         const installerPath = path.join(os.tmpdir(), `rustup-init${process.platform === 'win32' ? '.exe' : ''}`);
 
-        await downloadRustup(targetTriple, installerPath);
+        await downloadRustup(tripleTarget, installerPath);
 
         if (process.platform !== 'win32') {
             try {

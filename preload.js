@@ -7,8 +7,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	installCargo: (tripleTaget) => ipcRenderer.invoke('install-cargo', tripleTaget),
 
 	// c.f. utils/message-utils.js
-	on: (event, listener) => ipcRenderer.on,
-	removeListener: (event, listener) => ipcRenderer.removeListener,
+	on: (event, listener) => ipcRenderer.on(event, listener),
+	removeListener: (event, listener) => ipcRenderer.removeListener(event, listener),
 
 	// utils/git-utils.js
 	updateRepo: (repoPath, dirPath, branch='master') => ipcRenderer.invoke('update-repo', repoPath, dirPath, branch),

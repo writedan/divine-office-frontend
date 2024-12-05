@@ -53,7 +53,7 @@ app.on('ready', () => {
       mainEmitter.on('log-message', (stream, ...args) => {
         console.log(`[${stream}]`, args);
         if (mainWindow) {
-          mainWindow.webContents.send(stream, args);
+          mainWindow.webContents.send(stream, args.join(' '));
         }
       });
     });
