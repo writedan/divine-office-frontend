@@ -1,6 +1,8 @@
 import React from 'react';
 import { FaHome, FaCalendarAlt, FaSync } from 'react-icons/fa';
-import { NavigationProvider, useNavigation } from './NavigationContext'; 
+import { NavigationProvider, useNavigation } from './NavigationContext';
+
+import CargoInstaller from './CargoInstaller';
 
 const HomePage = () => (
   <>
@@ -46,6 +48,8 @@ function App() {
         return <HomePage />;
       case 'calendar':
         return <CalendarPage />;
+      case 'cargoinstall':
+        return <CargoInstaller />;
       default:
         return <HomePage />; 
     }

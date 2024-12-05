@@ -8,7 +8,7 @@ type NavigationContextType = {
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export const NavigationProvider = ({ children }: { children: ReactNode }) => {
-  const [currentPage, setCurrentPage] = useState(null);
+  const [currentPage, setCurrentPage] = useState('cargoinstall');
 
   const goto = (page: string) => {
     setCurrentPage(page);
