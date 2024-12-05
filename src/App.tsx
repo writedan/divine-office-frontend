@@ -1,9 +1,10 @@
 import React from 'react';
 import './App.css';
-import { FaHome, FaCalendarAlt } from 'react-icons/fa';
+import { FaHome, FaCalendarAlt, FaSync } from 'react-icons/fa';
 import { NavigationProvider, useNavigation } from './NavigationContext';
 
 import CargoInstall from './CargoInstall';
+import UpdatePage from './UpdatePage';
 
 const HomePage = () => (
   <>
@@ -32,6 +33,10 @@ const BottomNavigation = () => {
         <FaCalendarAlt className="icon" />
         <span>Calendar</span>
       </button>
+      <button className="nav-item" onClick={() => goto('update')}>
+        <FaSync className="icon" />
+        <span>Update</span>
+      </button>
     </div>
   );
 };
@@ -47,6 +52,8 @@ function App() {
         return <HomePage />;
       case 'calendar':
         return <CalendarPage />;
+      case 'update':
+        return <UpdatePage />;
       default:
         return <HomePage />; 
     }

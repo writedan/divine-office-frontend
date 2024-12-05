@@ -11,6 +11,93 @@ const https = require('https');
 const simpleGit = require('simple-git');
 const ts = require("typescript");
 const { build } = require("vite");
+const git = simpleGit();
+
+const divineOfficeDir = path.join(os.homedir(), 'divine-office');
+const repoURL = 'https://github.com/writedan/divine-office';
+
+async function cloneOrPullRepo() {
+  try {
+    // Check if the directory exists
+    const isRepo = await git.checkIsRepo(divineOfficeDir);
+    
+    if (isRepo) {
+      console.log('Repository exists. Pulling the latest changes...');
+      await git.cwd(divineOfficeDir);
+      await git.pull('origin', 'main');
+    } else {
+      console.log('Repository does not exist. Cloning...');
+      await git.clone(repoURL, divineOfficeDir);
+    }
+
+    console.log('Repository is up to date.');
+  } catch (err) {
+    console.error('Error during git clone or pull:', err);
+  }
+}
+
+async function runCargoAndCapturePort() {
+  try {
+    // Change to the divine-office directory
+    const cargoProcess = spawn('cargo', ['run', '--release'], { cwd: divineOfficeDir });
+    
+    let port = null;
+    
+    // Capture stdout to extract the port number
+    cargoProcess.stdout.on('data', (data) => {
+      const output = data.toString();
+      console.log(output);
+
+      // Assuming the port number is printed in the format "Listening on port <port>"
+      const portMatch = output.match(/Listening on port (\d+)/);
+      if (portMatch) {
+        port = portMatch[1];
+        console.log(`Captured port: ${port}`);
+      }
+    });
+
+    // Capture stderr
+    cargoProcess.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    // Handle process exit
+    cargoProcess.on('close', (code) => {
+      if (code === 0 && port) {
+        console.log(`Cargo finished successfully. Port: ${port}`);
+        return port;
+      } else {
+        console.error('Cargo process failed or no port found.');
+        return null;
+      }
+    });
+  } catch (err) {
+    console.error('Error running cargo:', err);
+    return null;
+  }
+}
+
+async function setupAndRun() {
+  // Step 1: Clone or pull the repository
+  await cloneOrPullRepo();
+
+  // Step 2: Run cargo and capture the port number
+  const port = await runCargoAndCapturePort();
+
+  if (port) {
+    console.log(`Application is running on port: ${port}`);
+    return port;
+  } else {
+    console.error('Failed to retrieve the port number.');
+    return null;
+  }
+}
+
+
+function logMessage(...args) {
+  console.log(...args);
+  mainWindow.webContents.send('log-message', args.join(' '));
+}
 
 async function setupAndBuildProject() {
     const git = simpleGit();
@@ -20,24 +107,33 @@ async function setupAndBuildProject() {
         // Check if the current directory is already a Git repository
         const isRepo = await git.checkIsRepo();
         if (!isRepo) {
-            console.log("Initializing new Git repository...");
+            logMessage("Initializing new Git repository...");
             await git.init(); // Initialize as a Git repository
             await git.addRemote('origin', repoURL); // Set the remote repository
-            console.log(`Repository initialized and linked to ${repoURL}.`);
+            logMessage(`Repository initialized and linked to ${repoURL}.`);
         } else {
-            console.log("Directory is already a Git repository.");
+            logMessage("Directory is already a Git repository.");
         }
 
         // Run the build process
-        console.log("Starting the build process...");
+        logMessage("Starting the build process...");
         await buildProject();
+
+        return { success: true };
     } catch (err) {
-        console.error("Error during setup or build:", err);
+        logMessage("Error during setup or build:", err);
+        return { success: false, error: err };
     }
 };
 
 ipcMain.handle('build-frontend', async () => {
   return await setupAndBuildProject();
+});
+
+ipcMain.handle('reboot-app', () => {
+    logMessage("Rebooting the application...");
+    app.relaunch(); 
+    app.quit();
 });
 
 function buildTypeScript() {
@@ -68,37 +164,37 @@ function buildTypeScript() {
     allDiagnostics.forEach(diagnostic => {
         const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
         const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-        console.error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
+        logMessage(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
     });
 
     if (emitResult.emitSkipped) {
         throw new Error("TypeScript compilation failed.");
     }
 
-    console.log("TypeScript build completed successfully.");
+    logMessage("TypeScript build completed successfully.");
 }
 
 async function buildVite() {
     try {
         await build(); // This assumes your `vite.config.js` is in the root directory.
-        console.log("Vite build completed successfully.");
+        logMessage("Vite build completed successfully.");
     } catch (err) {
-        console.error("Vite build failed:", err);
+        logMessage("Vite build failed:", err);
         throw err;
     }
 }
 
 async function buildProject() {
     try {
-        console.log("Building TypeScript...");
+        logMessage("Building TypeScript...");
         buildTypeScript();
 
-        console.log("Building Vite...");
+        logMessage("Building Vite...");
         await buildVite();
 
-        console.log("Build process completed successfully.");
+        logMessage("Build process completed successfully.");
     } catch (err) {
-        console.error("Build process failed:", err);
+        logMessage("Build process failed:", err);
     }
 }
 
@@ -223,6 +319,7 @@ let mainWindow;
 let server;
 
 app.on('ready', () => {
+  const SERVER_PORT = setupAndRun();
   const serverApp = express();
 
   serverApp.use(express.static(path.join(__dirname, 'dist')));

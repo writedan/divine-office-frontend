@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installCargo: (tripleTarget) => ipcRenderer.invoke('install-cargo', tripleTarget),
   on: (event, listener) => ipcRenderer.on(event, listener),
   removeListener: (event, listener) => ipcRenderer.removeListener(event, listener),
+  rebootApp: () => ipcRenderer.invoke('reboot-app'),
+  buildFrontend: () => ipcRenderer.invoke('build-frontend')
 });
