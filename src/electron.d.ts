@@ -3,13 +3,10 @@ export {};
 declare global {
   interface Window {
     electronAPI: {
-      getRustTargetTriple: () => string;
+      // utils/rust-utils.js
+      getRustTripleTarget: () => string;
       isCargoInstalled: () => boolean;
       installCargo: (targetTriple: string) => { success: boolean; error?: string };
-      on: (event: string, listener: (...args: any[]) => void) => void;
-      removeListener: (event: string, listener: (...args: any[]) => void) => void;
-      rebootApp: () => void;
-      buildFrontend: () => { success: boolean; error?: string };
     };
   }
 }
