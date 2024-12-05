@@ -6,7 +6,7 @@ const process = require('process');
 const {
     isMusl
 } = require('detect-libc');
-import { logMessage } from './message-utils';
+const { logMessage } = require("./message-utils");
 
 function getTripleTarget() {
     const platform = process.platform;

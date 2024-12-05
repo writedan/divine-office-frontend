@@ -1,4 +1,4 @@
-import { mainWindow } from '../main'
+const { mainWindow } = require("../main");
 
 const {
     ipcMain
