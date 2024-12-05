@@ -54,3 +54,5 @@ app.on('window-all-closed', () => {
 });
 
 app.disableHardwareAcceleration();
+
+module.exports = { mainWindow };

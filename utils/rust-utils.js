@@ -6,6 +6,7 @@ const process = require('process');
 const {
     isMusl
 } = require('detect-libc');
+import { logMessage } from './message-utils';
 
 function getTripleTarget() {
     const platform = process.platform;
@@ -43,7 +44,7 @@ function isCargoInstalled() {
 async function downloadRustup(tripleTaget, destinationPath) {
     return new Promise((resolve, reject) => {
         const url = `https://static.rust-lang.org/rustup/dist/${tripleTaget}/rustup-init${process.platform === 'win32' ? '.exe' : ''}`;
-        console.log('Saving', url, 'to', destinationPath);
+        logMessage('cargo-install', 'Saving', url, 'to', destinationPath);
         const file = fs.createWriteStream(destinationPath);
 
         https.get(url, (response) => {
@@ -69,13 +70,13 @@ function installRustup(installerPath) {
         const installer = spawn(command, args);
 
         installer.stdout.on('data', (data) => {
-            console.log(`stdout: ${data}`);
+            logMessage('cargo-install', `stdout: ${data}`);
             mainWindow.webContents.send('install-log', data.toString());
         });
 
         installer.stderr.on('data', (data) => {
-            console.error(`stderr: ${data}`);
-            mainWindow.webContents.send('install-log', data.toString());
+            logMessage('cargo-install', `stderr: ${data}`);
+            logMessage('cargo-install', data.toString());
         });
 
         installer.on('close', (code) => {
@@ -111,7 +112,7 @@ async function installCargo(event, tripleTarget) {
             success: true
         };
     } catch (error) {
-        console.error(error);
+        logMessage('cargo-install', error);
         return {
             success: false,
             error: error.message

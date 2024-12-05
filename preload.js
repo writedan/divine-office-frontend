@@ -4,5 +4,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	// utils/rust-utils.js
 	getRustTripleTarget:: () => ipcRenderer.invoke('rust-triple-target'),
 	isCargoInstalled: () => ipcRenderer.invoke('is-cargo-installed'),
-	installCargo: (tripleTaget) => ipcRenderer.invoke('install-cargo', tripleTaget)
+	installCargo: (tripleTaget) => ipcRenderer.invoke('install-cargo', tripleTaget),
+
+	// c.f. utils/message-utils.js
+	on: (event, listener) => ipcRenderer.on,
+	removeListener: (event, listener) => ipcRenderer.removeListener
 });
