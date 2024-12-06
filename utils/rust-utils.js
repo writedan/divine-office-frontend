@@ -33,7 +33,7 @@ function getTripleTarget() {
 
 function isCargoInstalled() {
     return new Promise((resolve) => {
-        exec('cargo --version', { shell: true }, (error, stdout) => {
+        exec('cargo --version', { shell: true, env: {} }, (error, stdout) => {
             if (error) {
                 resolve(false);
             } else {
@@ -69,7 +69,9 @@ function installRustup(installerPath) {
     return new Promise((resolve, reject) => {
         const command = `${installerPath}`;
         const args = ['-y'];
-        const installer = spawn(command, args, { shell: true });
+        
+        const newEnv = { ...process.env, PATH: process.env.PATH };
+        const installer = spawn(command, args, { shell: true, env: newEnv });
 
         installer.stdout.on('data', (data) => {
             logMessage('cargo-install', `stdout: ${data}`);
