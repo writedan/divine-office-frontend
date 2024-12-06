@@ -33,6 +33,8 @@ app.on('ready', () => {
   const localIP = getLocalIPAddress(); 
   const serverApp = express();
 
+  console.log('APP_DIR', __dirname);
+
   serverApp.use(express.static(path.join(__dirname, 'web-build')));
 
   portfinder.getPortPromise().then((port) => {
