@@ -4,6 +4,7 @@ import { NavigationProvider, useNavigation } from './NavigationContext';
 import './App.css';
 
 import CargoInstaller from './CargoInstaller';
+import BackendUpdater from './BackendUpdater';
 
 const HomePage = () => (
   <>
@@ -43,6 +44,8 @@ function App() {
         return <CalendarPage />;
       case 'cargo-install':
         return <CargoInstaller />;
+      case 'update-backend':
+        return <BackendUpdater />;
       default:
         return <HomePage />; 
     }
