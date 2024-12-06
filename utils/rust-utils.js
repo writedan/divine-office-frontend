@@ -8,6 +8,18 @@ const path = require("path");
 const fs = require("fs");
 const https = require("https");
 
+function getRustPath() {
+    if (os.platform() === 'win32') {
+        return process.env.USERPROFILE + '\\.cargo\\bin';
+    } else if (os.platform() === 'darwin' || os.platform() === 'linux') {
+        return path.join(os.homedir(), '.cargo', 'bin'); 
+    }
+    return ''; 
+}
+
+// ensure we have the system's path variables
+const env = { ...process.env, PATH: `${getRustPath()}:${process.env.PATH}` };
+
 function getTripleTarget() {
     const platform = process.platform;
     const arch = process.arch;
@@ -32,8 +44,10 @@ function getTripleTarget() {
 }
 
 function isCargoInstalled() {
+    logMessage('cargo-install', 'system environment:', env);
     return new Promise((resolve) => {
-        exec('cargo --version', { shell: true, env: {} }, (error, stdout) => {
+        exec('cargo --version', { env }, (error, stdout) => {
+            logMessage('cargo-install', error, stdout);
             if (error) {
                 resolve(false);
             } else {
@@ -70,8 +84,7 @@ function installRustup(installerPath) {
         const command = `${installerPath}`;
         const args = ['-y'];
         
-        const newEnv = { ...process.env, PATH: process.env.PATH };
-        const installer = spawn(command, args, { shell: true, env: newEnv });
+        const installer = spawn(command, args, { env });
 
         installer.stdout.on('data', (data) => {
             logMessage('cargo-install', `stdout: ${data}`);
