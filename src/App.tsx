@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaHome, FaCalendarAlt, FaSync } from 'react-icons/fa';
 import { NavigationProvider, useNavigation } from './NavigationContext';
+import './App.css';
 
 import CargoInstaller from './CargoInstaller';
 
@@ -26,10 +27,6 @@ const BottomNavigation = () => {
       <button className="nav-item" onClick={() => goto('home')}>
         <FaHome className="icon" />
         <span>Home</span>
-      </button>
-      <button className="nav-item" onClick={() => goto('calendar')}>
-        <FaCalendarAlt className="icon" />
-        <span>Calendar</span>
       </button>
     </div>
   );
