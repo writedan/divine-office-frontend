@@ -1,21 +1,37 @@
 {
-  "name": "Divine Office Frontend",
+  "name": "divine-office-frontend",
   "private": true,
   "version": "0.0.0",
+  "main": "main.js",
+  "author": "Daniel Write daniel@writefamily.com",
   "scripts": {
     "dev": "vite",
     "package": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "electron": "electron main.js"
+    "electron": "electron main.js",
+    "build": "electron-builder"
   },
   "dependencies": {
+    "child_process": "^1.0.2",
     "detect-libc": "^2.0.3",
+    "events": "^3.3.0",
+    "express": "^4.21.1",
+    "fs": "^0.0.1-security",
+    "https": "^1.0.0",
+    "os": "^0.1.2",
+    "path": "^0.12.7",
+    "process": "^0.11.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
     "react-router-dom": "^7.0.2",
-    "simple-git": "^3.27.0"
+    "simple-git": "^3.27.0",
+    "globals": "^15.11.0",
+    "portfinder": "^1.0.32",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.11.0",
+    "vite": "^5.4.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
@@ -24,6 +40,7 @@
     "@vitejs/plugin-react": "^4.3.3",
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9",
     "electron-reload": "^2.0.0-alpha.1",
     "eslint": "^9.13.0",
     "eslint-plugin-react-hooks": "^5.0.0",
@@ -34,5 +51,14 @@
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.11.0",
     "vite": "^5.4.10"
+  },
+  "build": {
+    "appId": "com.example.divine-office",
+    "productName": "Divine Office",
+    "files": [
+      "**/*",
+      "!**/*.ts",
+      "!**/*.map"
+    ]
   }
 }
