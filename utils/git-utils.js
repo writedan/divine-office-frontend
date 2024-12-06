@@ -1,4 +1,4 @@
-const { logMessage } = require("./message-utils")
+const { logMessage } = require("./message-utils");
 
 const { simpleGit, CleanOptions } = require('simple-git');
 const fs = require('fs');
@@ -7,12 +7,18 @@ const {
     ipcMain
 } = require('electron');
 
-async function updateRepo(repoPath, dirPath, branch='master') {
+async function updateRepo(event, repoPath, dirPath, branch='master') {
     try {
-        const git = simpleGit(dirPath);
-
+        let git;
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true });
+            git = simpleGit({
+                baseDir: '.'
+            });
+        } else {
+            git = simpleGit({
+                baseDir: dirPath
+            })
         }
 
         if (fs.existsSync(path.join(dirPath, '.git'))) {
@@ -24,7 +30,7 @@ async function updateRepo(repoPath, dirPath, branch='master') {
                 logMessage('git-log', 'Remote origin is set correctly. Pulling latest updates...');
                 await git.pull('origin', branch);
             } else {
-                throw `Remote origin does not match the repoPath. Current: ${origin?.refs.fetch || 'none'}`;
+                throw new Error(`Remote origin does not match the repoPath. Current: ${origin?.refs.fetch || 'none'}`);
             }
         } else {
             logMessage('git-log', 'Directory is not a Git repository. Cloning...');
