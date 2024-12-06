@@ -5,6 +5,7 @@ const ActivityIndicator = ({ message }) => {
     container: {
       display: "flex",
       alignItems: "center",
+      justifyContent: "center",
       gap: "10px",
       padding: "10px",
     },

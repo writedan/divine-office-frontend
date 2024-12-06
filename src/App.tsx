@@ -31,10 +31,6 @@ const BottomNavigation = () => {
         <FaCalendarAlt className="icon" />
         <span>Calendar</span>
       </button>
-      <button className="nav-item" onClick={() => goto('update')}>
-        <FaSync className="icon" />
-        <span>Update</span>
-      </button>
     </div>
   );
 };
@@ -48,7 +44,7 @@ function App() {
         return <HomePage />;
       case 'calendar':
         return <CalendarPage />;
-      case 'cargoinstall':
+      case 'cargo-install':
         return <CargoInstaller />;
       default:
         return <HomePage />; 
@@ -61,7 +57,7 @@ function App() {
         {renderPageContent()}
       </main>
 
-      {currentPage !== 'cargoinstall' && <BottomNavigation />}
+      {currentPage !== 'cargo-install' && <BottomNavigation />}
     </div>
   );
 }
