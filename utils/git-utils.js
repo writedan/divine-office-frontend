@@ -1,24 +1,27 @@
 const { logMessage } = require("./message-utils");
-
 const { simpleGit, CleanOptions } = require('simple-git');
 const fs = require('fs');
 const path = require('path');
-const {
-    ipcMain
-} = require('electron');
+const os = require('os');
+const { ipcMain } = require('electron');
 
-async function updateRepo(event, repoPath, dirPath, branch='master') {
+const getDivineOfficePath = (subPath = '') => {
+    const basePath = path.join(os.homedir(), '.divine-office');
+    return path.join(basePath, subPath);
+};
+
+async function updateRepo(event, repoPath, subDir, branch = 'master') {
     try {
+        const dirPath = getDivineOfficePath(subDir);
+
+        logMessage('git-log', `Identified target path: ${dirPath}`);
+        
         let git;
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true });
-            git = simpleGit({
-                baseDir: '.'
-            });
+            git = simpleGit({ baseDir: getDivineOfficePath() });
         } else {
-            git = simpleGit({
-                baseDir: dirPath
-            })
+            git = simpleGit({ baseDir: dirPath });
         }
 
         if (fs.existsSync(path.join(dirPath, '.git'))) {
@@ -37,13 +40,15 @@ async function updateRepo(event, repoPath, dirPath, branch='master') {
             await git.clone(repoPath, dirPath);
         }
 
-        return { success: true }
+        logMessage('git-log', 'Finished successfully');
+        return { success: true };
     } catch (error) {
         logMessage('git-log', 'An error occurred:', error.message);
-        return { success: false, error: error.message }
+        logMessage('git-log', JSON.stringify(error, null, 2));
+        return { success: false, error: error.message };
     }
 }
 
-ipcMain.handle('update-repo', async (repoPath, dirPath, branch='master') => {
-    return await updateRepo(repoPath, dirPath, branch);
-})
+ipcMain.handle('update-repo', async (event, repoPath, subDir, branch = 'master') => {
+    return await updateRepo(event, repoPath, subDir, branch);
+});
