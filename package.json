@@ -10,25 +10,28 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron main.js",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "publish": "electron-builder --publish=always"
   },
   "dependencies": {
     "child_process": "^1.0.2",
     "detect-libc": "^2.0.3",
+    "electron-updater": "^6.3.9",
     "events": "^3.3.0",
     "express": "^4.21.1",
     "fs": "^0.0.1-security",
+    "globals": "^15.11.0",
     "https": "^1.0.0",
     "os": "^0.1.2",
     "path": "^0.12.7",
+    "portfinder": "^1.0.32",
     "process": "^0.11.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
     "react-router-dom": "^7.0.2",
     "simple-git": "^3.27.0",
-    "globals": "^15.11.0",
-    "portfinder": "^1.0.32",
+    "suncalc": "^1.9.0",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.11.0",
     "vite": "^5.4.10"
@@ -53,6 +56,11 @@
     "vite": "^5.4.10"
   },
   "build": {
+    "publish": {
+      "provider": "github",
+      "owner": "writedan",
+      "repo": "divine-office-frontend"
+    },
     "appId": "com.example.divine-office",
     "productName": "Divine Office",
     "files": [
