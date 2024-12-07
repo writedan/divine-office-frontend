@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build app for macOS (Universal: arm64 and x64)
+      - name: Build app for macOS (arm64 and x64)
         run: npx electron-builder --mac --x64 --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
