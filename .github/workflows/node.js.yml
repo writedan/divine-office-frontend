@@ -21,8 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build app for macOS
-        run: npx electron-builder --mac
+      - name: Build app for macOS (Universal: arm64 and x64)
+        run: npx electron-builder --mac --x64 --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -47,11 +47,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Snapcraft
-        run: sudo snap install snapcraft --classic
-
-      - name: Build app for Linux
-        run: npx electron-builder --linux
+      - name: Build app for Linux (x64 and arm64)
+        run: npx electron-builder --linux --x64 --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -76,8 +73,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build app for Windows
-        run: npx electron-builder --win
+      - name: Build app for Windows (x64 and arm64)
+        run: npx electron-builder --win --x64 --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 

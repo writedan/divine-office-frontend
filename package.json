@@ -61,7 +61,16 @@
       "owner": "writedan",
       "repo": "divine-office-frontend"
     },
-    "appId": "com.example.divine-office",
+    "appId": "com.example.app",
+    "mac": {
+      "target": ["dmg"]
+    },
+    "linux": {
+      "target": ["deb", "AppImage"] 
+    },
+    "win": {
+      "target": ["nsis"]
+    },
     "productName": "Divine Office",
     "files": [
       "**/*",
