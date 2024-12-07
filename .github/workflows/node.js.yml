@@ -6,12 +6,8 @@ on:
       - 'v*'
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    
-    runs-on: ${{ matrix.os }}
+  build-macos:
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code
@@ -25,24 +21,68 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Snapcraft (Linux only)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo snap install snapcraft --classic
-
-      - name: Build app
-        run: |
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            npx electron-builder --mac
-          elif [[ "$RUNNER_OS" == "Linux" ]]; then
-            npx electron-builder --linux
-          elif [[ "$RUNNER_OS" == "Windows" ]]; then
-            npx electron-builder --win
-          fi
+      - name: Build app for macOS
+        run: npx electron-builder --mac
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Upload release artifacts
+      - name: Upload macOS artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.os }}-artifacts
+          name: macos-artifacts
+          path: dist/
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Build app for Linux
+        run: npx electron-builder --linux
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-artifacts
+          path: dist/
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build app for Windows
+        run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-artifacts
           path: dist/
