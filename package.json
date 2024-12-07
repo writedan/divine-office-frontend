@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.1",
   "main": "main.js",
-  "author": "Daniel Write daniel@writefamily.com",
+  "author": "Daniel Write",
+  "email": "daniel@writefamily.com",
   "scripts": {
     "dev": "vite",
     "package": "tsc -b && vite build",
