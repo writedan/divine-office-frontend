@@ -64,10 +64,11 @@
     },
     "appId": "com.example.app",
     "mac": {
-      "target": ["dmg"]
+      "target": ["dmg", "zip"]
     },
     "linux": {
-      "target": ["deb", "AppImage"] 
+      "target": ["deb", "AppImage"],
+      "maintainer": "Daniel Write <daniel@writefamily.com>"
     },
     "win": {
       "target": ["nsis"]
