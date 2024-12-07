@@ -28,3 +28,5 @@ tsconfig.node.json
 *.njsproj
 *.sln
 *.sw?
+
+.access-token

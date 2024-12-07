@@ -26,7 +26,14 @@ jobs:
         run: npm install
 
       - name: Build app
-        run: npx electron-builder --$RUNNER_OS
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            npx electron-builder --mac
+          elif [[ "$RUNNER_OS" == "Linux" ]]; then
+            npx electron-builder --linux
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            npx electron-builder --win
+          fi
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
