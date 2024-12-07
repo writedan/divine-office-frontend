@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "main": "main.js",
-  "author": "Daniel Write",
+  "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
   "scripts": {
     "dev": "vite",
