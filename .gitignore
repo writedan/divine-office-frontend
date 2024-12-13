@@ -30,3 +30,4 @@ tsconfig.node.json
 *.sw?
 
 .access-token
+divine-office.p12

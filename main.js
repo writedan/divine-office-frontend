@@ -4,7 +4,6 @@ const path = require('path');
 const express = require('express');
 const portfinder = require('portfinder');
 const EventEmitter = require('events');
-const { autoUpdater } = require('electron-updater');
 
 require("./utils/rust-utils");
 require("./utils/git-utils");
@@ -54,16 +53,6 @@ app.on('ready', () => {
 
       mainWindow.loadURL(`http://${localIP}:${port}`);
 
-      autoUpdater.checkForUpdatesAndNotify();
-
-      autoUpdater.on('update-available', () => {
-          mainWindow.webContents.send('update-available');
-      });
-
-      autoUpdater.on('update-downloaded', () => {
-          mainWindow.webContents.send('update-downloaded');
-      });
-
       mainEmitter.on('log-message', (stream, ...args) => {
         console.log(`[${stream}]`, args);
         if (mainWindow) {
@@ -80,14 +69,6 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
-});
-
-autoUpdater.on('error', (error) => {
-    console.error('Update error:', error);
-});
-
-ipcMain.on('restart-app', () => {
-    autoUpdater.quitAndInstall();
 });
 
 app.disableHardwareAcceleration();
