@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import SunCalc from 'suncalc';
 
+import { useApi } from '../ApiControl';
+
 const colors = {
   White: '#ffffff',
   Blue: '#0066cc',
@@ -19,28 +21,11 @@ const Hours = ({now}) => {
   const [meals, setMeals] = useState({});
   const [hoveredRow, setHoveredRow] = useState(null);
 
+  const { getMetadata } = useApi();
+
   useEffect(() => {
     const fetchLiturgicalData = async () => {
-      const response = {
-        today: {
-          name: "Saturday in the 1st Week of Advent",
-          penance: "Fasting", 
-          color: "Violet",
-          rank: "Feria",
-          identifiers: [
-            { season: "Advent", week: "1", day: "Saturday" }
-          ]
-        },
-        tomorrow: {
-          name: "2nd Sunday of Advent",
-          penance: null,
-          color: "Violet",
-          rank: "StrongSunday",
-          identifiers: [
-            { season: "Advent", week: "2", day: "Sunday" }
-          ]
-        }
-      };
+      const response = await getMetadata(now);
 
       setToday(response.today);
       setTomorrow(response.tomorrow);

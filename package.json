@@ -21,6 +21,7 @@
     "@react-native-community/geolocation": "^3.4.0",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
+    "axios": "^1.7.9",
     "child_process": "^1.0.2",
     "detect-libc": "^2.0.3",
     "electron": "^33.2.1",
