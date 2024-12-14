@@ -3,16 +3,16 @@ const { simpleGit, CleanOptions } = require('simple-git');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { ipcMain } = require('electron');
+const { ipcMain, app } = require('electron');
 
 const getDivineOfficePath = (subPath = '') => {
-    const basePath = path.join(os.homedir(), '.divine-office');
+    const basePath = app.getPath('userData');
     return path.join(basePath, subPath);
 };
 
 async function updateRepo(event, repoPath, subDir, branch = 'master') {
     try {
-        const dirPath = getDivineOfficePath(subDir);
+        const dirPath = path.resolve(getDivineOfficePath(subDir));
 
         logMessage('git-log', `Identified target path: ${dirPath}`);
         
