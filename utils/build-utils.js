@@ -3,13 +3,15 @@ const { spawn } = require('child_process');
 const path = require('path');
 const { logMessage } = require("./message-utils");
 
+let cargoProcess = null;
+
 ipcMain.handle('start-backend', async (event) => {
   try {
     const targetDir = path.join(app.getPath('userData'), 'backend');
 
     logMessage("start-backend", "Identified path", targetDir);
     
-    const cargoProcess = spawn('cargo', ['run', '--release'], { cwd: targetDir });
+    cargoProcess = spawn('cargo', ['run', '--release'], { cwd: targetDir });
 
     let output = '';
     let url = null;
@@ -43,5 +45,13 @@ ipcMain.handle('start-backend', async (event) => {
     console.error(error);
     logMessage("start-backend", error);
     return { success: false, error: error.message };
+  }
+});
+
+app.on('before-quit', () => {
+  console.log('terminating cargo');
+  if (cargoProcess) {
+    console.log("Terminating cargo process...");
+    cargoProcess.kill('SIGTERM');
   }
 });
