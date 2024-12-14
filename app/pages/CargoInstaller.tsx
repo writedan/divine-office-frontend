@@ -7,6 +7,7 @@ import { useNavigation } from '../Navigation';
 const CargoInstaller = () => {
   const [cargoInstalled, setCargoInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [init, setInit] = useState(false);
 
   const { goto } = useNavigation();
 
@@ -22,6 +23,8 @@ const CargoInstaller = () => {
   }
 
   async function install() {
+    if (init) return;
+    setInit(true);
     const target = await window.electronAPI.getRustTripleTarget();
     const res = await window.electronAPI.installCargo(target);
     if (res.success) {
