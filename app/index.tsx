@@ -5,6 +5,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Entypo from 'react-native-vector-icons/Entypo';
 
 import CargoInstaller from './pages/CargoInstaller';
+import BackendInstaller from './pages/BackendInstaller';
 
 const App = () => {
   return (
@@ -37,10 +38,14 @@ const MainContent = () => {
     return <CargoInstaller />;
   }
 
-  return <Text>{currentPage}</Text>;
+  if (currentPage == 'install-backend') {
+    return <BackendInstaller />;
+  }
+
+  return <Text>Requested page "{currentPage}" but no such identifier is registered.</Text>;
 };
 
-const NavItem = ({ type, icon, label }) => {
+const NavItem = ({ type, icon, label, goto }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const { currentPage } = useNavigation();
 
@@ -49,7 +54,7 @@ const NavItem = ({ type, icon, label }) => {
   return (
     <Pressable
       style={[styles.navItem, isHovered && styles.navItemHovered]}
-      onPress={() => console.log(`${label} clicked`)}
+      onPress={goto}
       onHoverIn={() => setIsHovered(true)}
       onHoverOut={() => setIsHovered(false)}
     >

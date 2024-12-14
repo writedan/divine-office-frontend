@@ -8,6 +8,7 @@ export const NavigationProvider = ({ children }) => {
 
   const goto = (page, args={}) => {
     setCurrentPage(page);
+    setPageArgs(args);
   };
 
   return (

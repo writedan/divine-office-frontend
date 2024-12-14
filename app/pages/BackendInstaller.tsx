@@ -4,28 +4,27 @@ import AsyncCall from '../components/AsyncCall';
 import EndpointLog from '../components/EndpointLog';
 import { useNavigation } from '../Navigation';
 
-const CargoInstaller = () => {
-  const [cargoInstalled, setCargoInstalled] = useState(false);
+const BackendInstaller = () => {
+  const [backendInstalled, setBackendInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   const { goto } = useNavigation();
 
   async function check() {
-    const res = await window.electronAPI.isCargoInstalled();
+    const res = await window.electronAPI.fileExists('backend');
 
     if (res) {
-      goto('install-backend');
+      goto('start-backend');
       return;
     }
 
-    setCargoInstalled(await window.electronAPI.isCargoInstalled());
+    setBackendInstalled(await window.electronAPI.isBackendInstalled());
   }
 
   async function install() {
-    const target = await window.electronAPI.getRustTripleTarget();
-    const res = await window.electronAPI.installCargo(target);
+    const res = await window.electronAPI.updateRepo('https://github.com/writedan/divine-office', 'backend');
     if (res.success) {
-      goto('install-backend');
+      goto('start-backend');
     }
   }
 
@@ -37,38 +36,30 @@ const CargoInstaller = () => {
     <View style={styles.container}>
       {installing ? (
         <View style={styles.content}>
-          <EndpointLog stream="cargo-install" />
-          <AsyncCall call={install} message="Installing Cargo">
+          <EndpointLog stream="git-log" />
+          <AsyncCall call={install} message="Installing Backend">
             <Text style={styles.errorMessage}>
-              Cargo failed to install. Please visit{' '}
-              <Text
-                style={styles.link}
-                onPress={() => Linking.openURL('https://rustup.rs')}
-              >
-                rustup.rs
-              </Text>{' '}
-              and install it manually if problems persist.
+              Backend installation failed.
             </Text>
           </AsyncCall>
         </View>
       ) : (
         <View style={styles.content}>
-          <Text style={styles.title}>Cargo Installation</Text>
-          <AsyncCall call={check} message="Checking for Cargo Installation">
-            {cargoInstalled ? (
-              <Text style={styles.message}>Cargo is already installed!</Text>
+          <Text style={styles.title}>Backend Installation</Text>
+          <AsyncCall call={check} message="Checking for backend installation">
+            {backendInstalled ? (
+              <Text style={styles.message}>Backend is already installed!</Text>
             ) : (
               <View>
                 <Text style={styles.message}>
-                  This application depends on Cargo, a build system for the Rust
-                  programming language. We did not detect it on your system.
+                  This application requires a backend to function. We did not detect it on your system.
                 </Text>
                 <TouchableOpacity
                   style={styles.button}
                   onPress={handleInstall}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.buttonText}>Install Cargo</Text>
+                  <Text style={styles.buttonText}>Install Backend</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -131,4 +122,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CargoInstaller;
+export default BackendInstaller;
