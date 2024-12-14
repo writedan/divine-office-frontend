@@ -42,8 +42,6 @@ app.on('ready', () => {
       console.log(`Server started at http://${localIP}:${port}`); 
 
       mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
         webPreferences: {
           preload: path.join(__dirname, 'preload.js'),
           nodeIntegration: false,
@@ -51,6 +49,7 @@ app.on('ready', () => {
         },
       });
 
+      mainWindow.maximize();
       mainWindow.loadURL(`http://${localIP}:${port}`);
 
       mainEmitter.on('log-message', (stream, ...args) => {
