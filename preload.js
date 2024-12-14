@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	// utils/git-utils.js
 	updateRepo: (repoPath, dirPath, branch='master') => ipcRenderer.invoke('update-repo', repoPath, dirPath, branch),
+	getCommitDifference: (repoPath, dirPath, branch='master') => ipcRenderer.invoke('get-commit-difference', repoPath, dirPath, branch),
 
 	// utils/build-utils.js
 	rebuildFrontend: () => ipcRenderer.invoke('rebuild-frontend'),

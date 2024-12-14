@@ -49,6 +49,37 @@ async function updateRepo(event, repoPath, subDir, branch = 'master') {
     }
 }
 
+const getCommitDifference = async (repoPath, subDir, branch = 'master') => {
+    try {
+        const dirPath = path.resolve(getDivineOfficePath(subDir));
+
+        if (!fs.existsSync(dirPath) || !fs.existsSync(path.join(dirPath, '.git'))) {
+            throw new Error('The specified directory is not a Git repository.');
+        }
+
+        const git = simpleGit({ baseDir: dirPath });
+
+        await git.fetch('origin', branch);
+
+        const localBranch = await git.revparse([branch]);
+        const remoteBranch = await git.revparse([`origin/${branch}`]);
+
+        const ahead = (await git.log([`${remoteBranch}..${localBranch}`])).total;
+        const behind = (await git.log([`${localBranch}..${remoteBranch}`])).total;
+
+        logMessage('git-log', `Local branch is ${ahead} commits ahead and ${behind} commits behind the remote branch.`);
+
+        return { success: true, ahead, behind };
+    } catch (error) {
+        logMessage('git-log', 'An error occurred while checking commit differences:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
 ipcMain.handle('update-repo', async (event, repoPath, subDir, branch = 'master') => {
     return await updateRepo(event, repoPath, subDir, branch);
+});
+
+ipcMain.handle('get-commit-difference', async (event, repoPath, subDir, branch = 'master') => {
+    return await getCommitDifference(repoPath, subDir, branch);
 });
