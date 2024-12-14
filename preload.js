@@ -19,4 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	// utils/url-utils.js
 	openLink: (url) => ipcRenderer.invoke('open-link', url),
 	fileExists: (uri) => ipcRenderer.invoke('file-exists', uri),
+
+	// utils/build-utils.js
+	startBackend: () => ipcRenderer.invoke('start-backend'),
 });
