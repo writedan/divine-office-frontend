@@ -1,7 +1,17 @@
 const { app, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
+const os = require('os');
 const { logMessage } = require("./message-utils");
+
+function getRustPath() {
+    if (os.platform() === 'win32') {
+        return process.env.USERPROFILE + '\\.cargo\\bin';
+    } else if (os.platform() === 'darwin' || os.platform() === 'linux') {
+        return path.join(os.homedir(), '.cargo', 'bin'); 
+    }
+    return ''; 
+}
 
 ipcMain.handle('start-backend', async (event) => {
   try {
@@ -9,7 +19,11 @@ ipcMain.handle('start-backend', async (event) => {
 
     logMessage("start-backend", "Identified path", targetDir);
     
-    const cargoProcess = spawn('cargo', ['run', '--release'], { cwd: targetDir });
+    const env = { ...process.env, PATH: `${getRustPath()}:${process.env.PATH}` };
+    const cargoProcess = spawn('cargo', ['run', '--release'], { 
+      cwd: targetDir,
+      env: env 
+    });
 
     app.on('before-quit', () => {
       console.log('terminating cargo');
