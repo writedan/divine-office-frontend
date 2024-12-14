@@ -1,33 +1,37 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { NavigationProvider, useNavigation } from './Navigation';
+import { ApiControl } from './ApiControl';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Entypo from 'react-native-vector-icons/Entypo';
 
 import CargoInstaller from './pages/CargoInstaller';
 import BackendInstaller from './pages/BackendInstaller';
+import StartServer from './pages/StartServer';
 
 const App = () => {
   return (
-    <NavigationProvider>
-      <View style={styles.container}>
-        <ScrollView style={{ width: '100%' }}>
+    <ApiControl>
+      <NavigationProvider>
+        <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Divine Office</Text>
-          </View>
+              <Text style={styles.title}>Divine Office</Text>
+            </View>
+          <ScrollView style={{ width: '100%' }}>
 
-          <View style={{ flex: 1, width: '100%' }}>
-            <MainContent />
-          </View>
-        </ScrollView>
+            <View style={{ flex: 1, width: '100%' }}>
+              <MainContent />
+            </View>
+          </ScrollView>
 
-        <View style={styles.navBar}>
-          <NavItem type="entypo" icon="calendar" label="Today" />
-          <NavItem type="fontawesome" icon="calendar" label="Calendar" />
-          <NavItem type="fontawesome" icon="refresh" label="Update" />
+          <View style={styles.navBar}>
+            <NavItem type="entypo" icon="calendar" label="Today" />
+            <NavItem type="fontawesome" icon="calendar" label="Calendar" />
+            <NavItem type="fontawesome" icon="refresh" label="Update" />
+          </View>
         </View>
-      </View>
-    </NavigationProvider>
+      </NavigationProvider>
+    </ApiControl>
   );
 };
 
@@ -42,6 +46,10 @@ const MainContent = () => {
     return <BackendInstaller />;
   }
 
+  if (currentPage == 'start-backend') {
+    return <StartServer />;
+  }
+
   return <Text>Requested page "{currentPage}" but no such identifier is registered.</Text>;
 };
 
@@ -49,7 +57,7 @@ const NavItem = ({ type, icon, label, goto }) => {
   const [isHovered, setIsHovered] = React.useState(false);
   const { currentPage } = useNavigation();
 
-  if (currentPage == 'install-cargo') return null;
+  if (currentPage == 'install-cargo' || currentPage == 'install-backend') return null;
 
   return (
     <Pressable

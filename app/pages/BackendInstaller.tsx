@@ -18,7 +18,7 @@ const BackendInstaller = () => {
       return;
     }
 
-    setBackendInstalled(await window.electronAPI.isBackendInstalled());
+    setBackendInstalled(await window.electronAPI.fileExists('backend'));
   }
 
   async function install() {
