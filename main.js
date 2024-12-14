@@ -55,7 +55,12 @@ app.on('ready', () => {
   const localIP = getLocalIPAddress(); 
   const serverApp = express();
 
-  const webBuildPath = path.join(__dirname, 'web-build');
+  let webBuildPath;
+  if (fs.existsSync(path.join(app.getPath('userData'), 'frontend', 'web-build'))) {
+    webBuildPath = path.join(path.join(app.getPath('userData'), 'frontend', 'web-build'));
+  } else {
+    webBuildPath = path.join(__dirname, 'web-build');
+  }
 
   console.log('APP_DIR', webBuildPath);
 
