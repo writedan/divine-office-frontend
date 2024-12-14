@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { NavigationProvider, useNavigation } from './Navigation';
 import { ApiControl } from './ApiControl';
+import { Geolocation } from './Geolocation';
+
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Entypo from 'react-native-vector-icons/Entypo';
 
@@ -9,29 +11,28 @@ import CargoInstaller from './pages/CargoInstaller';
 import BackendInstaller from './pages/BackendInstaller';
 import StartServer from './pages/StartServer';
 import HoursPage from './pages/HoursPage';
+import UpdatePage from './pages/Updater';
 
 const App = () => {
   return (
     <View style={styles.background}> 
-      <ApiControl>
-        <NavigationProvider>
-          <View style={styles.container}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Divine Office</Text>
-            </View>
+      <Geolocation>
+        <ApiControl>
+          <NavigationProvider>
+            <View style={styles.container}>
+              <View style={styles.header}>
+                <Text style={styles.title}>Divine Office</Text>
+              </View>
 
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-              <MainContent />
-            </ScrollView>
+              <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+                <MainContent />
+              </ScrollView>
 
-            <View style={styles.navBar}>
-              <NavItem type="entypo" icon="calendar" label="Today" />
-              <NavItem type="fontawesome" icon="calendar" label="Calendar" />
-              <NavItem type="fontawesome" icon="refresh" label="Update" />
+              <NavBar />
             </View>
-          </View>
-        </NavigationProvider>
-      </ApiControl>
+          </NavigationProvider>
+        </ApiControl>
+      </Geolocation>
     </View>
   );
 };
@@ -55,41 +56,62 @@ const MainContent = () => {
     return <HoursPage now={pageArgs.date} />;
   }
 
+  if (currentPage == 'update') {
+    return <UpdatePage />;
+  }
+
   return <Text>Requested page "{currentPage}" with args {JSON.stringify(pageArgs)} but no such identifier is registered.</Text>;
 };
 
-const NavItem = ({ type, icon, label, goto }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
-  const { currentPage } = useNavigation();
+const NavBar = ({}) => {
 
-  const isActive = currentPage === label.toLowerCase();
+  const { currentPage, goto } = useNavigation();
+
+  const NavItem = ({ type, icon, label, goto }) => {
+    const [isHovered, setIsHovered] = React.useState(false);
+
+    const isActive = currentPage === label.toLowerCase();
+
+    return (
+      <Pressable
+        style={[
+          styles.navItem,
+          isHovered && styles.navItemHovered,
+          isActive && styles.navItemActive, 
+        ]}
+        onPress={goto}
+        onHoverIn={() => setIsHovered(true)}
+        onHoverOut={() => setIsHovered(false)}
+      >
+        {type === 'entypo' && (
+          <Entypo name={icon} size={30} color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} />
+        )}
+        {type === 'fontawesome' && (
+          <FontAwesome name={icon} size={30} color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} />
+        )}
+        <Text style={[styles.navText, isHovered && styles.navTextHovered, isActive && styles.navTextActive]}>
+          {label}
+        </Text>
+      </Pressable>
+    );
+  };
 
   if (currentPage === 'install-cargo' || currentPage === 'install-backend') return null;
 
-  return (
-    <Pressable
-      style={[
-        styles.navItem,
-        isHovered && styles.navItemHovered,
-        isActive && styles.navItemActive, 
-      ]}
-      onPress={goto}
-      onHoverIn={() => setIsHovered(true)}
-      onHoverOut={() => setIsHovered(false)}
-    >
-      {type === 'entypo' && (
-        <Entypo name={icon} size={30} color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} />
-      )}
-      {type === 'fontawesome' && (
-        <FontAwesome name={icon} size={30} color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} />
-      )}
-      <Text style={[styles.navText, isHovered && styles.navTextHovered, isActive && styles.navTextActive]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-};
+  console.log(currentPage);
 
+  return (
+    <View style={styles.navBar}>
+      {currentPage != 'start-backend' && (
+        <>
+          <NavItem type="entypo" icon="calendar" label="Today" goto={() => goto('today', {date: new Date()})} />
+          <NavItem type="fontawesome" icon="calendar" label="Calendar" goto={() => goto('calendar', {today: new Date()})} />
+        </>
+      )}
+      <NavItem type="fontawesome" icon="refresh" label="Update" goto={() => goto('update')} />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   background: {

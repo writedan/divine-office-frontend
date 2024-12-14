@@ -12,10 +12,10 @@ const AsyncCall = ({ call, message, children }) => {
     const load = async () => {
       try {
         setRunning(true);
-        console.log('[LOAD]', message);
+        console.log('[AsyncCall load]', message);
         await call(); 
       } catch (error) {
-        console.error('[ERROR]', error);
+        console.error('[AsyncCall error]', error);
       } finally {
         setRunning(false);
       }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import SunCalc from 'suncalc';
 
+import { useGeolocation } from '../Geolocation';
 import { useApi } from '../ApiControl';
 
 const colors = {
@@ -23,6 +24,8 @@ const Hours = ({now}) => {
 
   const { getMetadata } = useApi();
 
+  const { lat: latitude, lon: longitude } = useGeolocation();
+
   useEffect(() => {
     const fetchLiturgicalData = async () => {
       const response = await getMetadata(now);
@@ -32,8 +35,6 @@ const Hours = ({now}) => {
     };
 
     const calculateHours = () => {
-      const { latitude, longitude } = getUserLocation();
-
       const times = SunCalc.getTimes(now, latitude, longitude);
       const daylightDuration = times.sunset - times.sunrise;
 
@@ -47,8 +48,8 @@ const Hours = ({now}) => {
         { name: 'Matins', time: roundToNearest15(times.dawn) },
         { name: 'Prime', time: roundToNearest15(addSunlightHours(times.sunrise, 1 / 12)) },
         { name: 'Terce', time: roundToNearest15(addSunlightHours(times.sunrise, 3 / 12)) },
-        { name: 'Sext', time: roundToNearest15(addSunlightHours(times.sunrise, 5 / 12)) },
-        { name: 'None', time: roundToNearest15(addSunlightHours(times.sunrise, 7 / 12)) },
+        { name: 'Sext', time: roundToNearest15(addSunlightHours(times.sunrise, 6 / 12)) },
+        { name: 'None', time: roundToNearest15(addSunlightHours(times.sunrise, 9 / 12)) },
         { name: 'Vespers', time: roundToNearest15(times.sunset) },
         { name: 'Compline', time: roundToNearest15(times.night) },
       ];
@@ -72,10 +73,6 @@ const Hours = ({now}) => {
 	};
 
   useEffect(calculateMeals, [today]);
-
-  const getUserLocation = () => {
-    return { latitude: 40.7128, longitude: -74.0060 }; // Example: New York City
-  };
 
   const formatTime = (date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
