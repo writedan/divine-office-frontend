@@ -7,6 +7,7 @@ import { useNavigation } from '../Navigation';
 const BackendInstaller = () => {
   const [backendInstalled, setBackendInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [installReloadKey, setInstallReloadKey] = useState(0);
 
   const { goto } = useNavigation();
 
@@ -22,7 +23,9 @@ const BackendInstaller = () => {
   }
 
   async function install() {
+    console.log('install');
     const res = await window.electronAPI.updateRepo('https://github.com/writedan/divine-office', 'backend');
+    console.log('install', res);
     if (res.success) {
       goto('start-backend');
     }
@@ -30,6 +33,7 @@ const BackendInstaller = () => {
 
   function handleInstall() {
     setInstalling(true);
+    setInstallReloadKey(installReloadKey + 1);
   }
 
   return (
@@ -37,7 +41,7 @@ const BackendInstaller = () => {
       {installing ? (
         <View style={styles.content}>
           <EndpointLog stream="git-log" />
-          <AsyncCall call={install} message="Installing Backend">
+          <AsyncCall call={install} message="Installing Backend" key={installReloadKey}>
             <Text style={styles.errorMessage}>
               Backend installation failed.
             </Text>

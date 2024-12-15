@@ -7,6 +7,7 @@ import { useNavigation } from '../Navigation';
 const CargoInstaller = () => {
   const [cargoInstalled, setCargoInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [installReloadKey, setInstallReloadKey] = useState(0);
 
   const { goto } = useNavigation();
 
@@ -31,6 +32,7 @@ const CargoInstaller = () => {
 
   function handleInstall() {
     setInstalling(true);
+    setInstallReloadKey(installReloadKey + 1);
   }
 
   return (
@@ -38,7 +40,7 @@ const CargoInstaller = () => {
       {installing ? (
         <View style={styles.content}>
           <EndpointLog stream="cargo-install" />
-          <AsyncCall call={install} message="Installing Cargo">
+          <AsyncCall call={install} message="Installing Cargo" key={installReloadKey}>
             <Text style={styles.errorMessage}>
               Cargo failed to install. Please visit{' '}
               <Text

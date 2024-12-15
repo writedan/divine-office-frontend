@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import SunCalc from 'suncalc';
+import AsyncCall from '../components/AsyncCall';
 
 import { useGeolocation } from '../Geolocation';
 import { useApi } from '../ApiControl';
@@ -26,9 +27,10 @@ const Hours = ({now}) => {
 
   const { lat: latitude, lon: longitude } = useGeolocation();
 
-  useEffect(() => {
+  const load = async () => {
     const fetchLiturgicalData = async () => {
       const response = await getMetadata(now);
+      console.log('fetchLiturgicalData', response);
 
       setToday(response.today);
       setTomorrow(response.tomorrow);
@@ -57,22 +59,9 @@ const Hours = ({now}) => {
       setHours(liturgicalHours);
     };
 
-    fetchLiturgicalData();
+    await fetchLiturgicalData();
     calculateHours();
-  }, []);
-
-  const calculateMeals = () => {
-  	if (!today) return;
-	const meals = [];
-		if (today.penance == null || today.penance == 'Abstinence') {
-				meals.push({name: 'Dinner', hour: 'Sext'});
-		}
-
-		meals.push({name: 'Supper', hour: 'Vespers'});
-		setMeals(meals);
-	};
-
-  useEffect(calculateMeals, [today]);
+  };
 
   const formatTime = (date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -135,27 +124,29 @@ const Hours = ({now}) => {
   );
 
   return (
-    <View style={{ width: '50%', marginLeft: '25%' }}>
-      {today && renderSection(today.name, today.color)}
-      {today && renderPenanceMessage(today.penance)}
+    <AsyncCall call={load} message={"Fetch liturgical information..."}>
+      <View style={{ width: '50%', marginLeft: '25%' }}>
+        {today && renderSection(today.name, today.color)}
+        {today && renderPenanceMessage(today.penance)}
 
-      <View style={styles.tableContainer}>
-        {hours.map((hour, index) => {
-          if (tomorrow && (hour.name == 'Vespers' || hour.name == 'Compline')) return null;
-
-          return renderRow(hour.name, formatTime(hour.time));
-        })}
-      </View>
-
-      {tomorrow && renderSection(tomorrow.name, tomorrow.color)}
-
-      {tomorrow && (
         <View style={styles.tableContainer}>
-          {renderRow('First Vespers', formatTime(hours.find(h => h.name === 'Vespers')?.time))}
-          {renderRow('First Compline', formatTime(hours.find(h => h.name === 'Compline')?.time))}
+          {hours.map((hour, index) => {
+            if (tomorrow && (hour.name == 'Vespers' || hour.name == 'Compline')) return null;
+
+            return renderRow(hour.name, formatTime(hour.time));
+          })}
         </View>
-      )}
-    </View>
+
+        {tomorrow && renderSection(tomorrow.name, tomorrow.color)}
+
+        {tomorrow && (
+          <View style={styles.tableContainer}>
+            {renderRow('First Vespers', formatTime(hours.find(h => h.name === 'Vespers')?.time))}
+            {renderRow('First Compline', formatTime(hours.find(h => h.name === 'Compline')?.time))}
+          </View>
+        )}
+      </View>
+    </AsyncCall>
   );
 };
 
