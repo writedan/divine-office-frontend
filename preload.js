@@ -23,7 +23,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	// utils/build-utils.js
 	startBackend: () => ipcRenderer.invoke('start-backend'),
-
-	// to be removed
-	printTree: (dir, depth = 0) => ipcRenderer.invoke('print-tree', dir, depth),
 });
