@@ -78,15 +78,12 @@ const NavBar = ({}) => {
     const backendBehind = await window.electronAPI.getCommitDifference('https://github.com/writedan/divine-office', 'backend');
     const frontendBehind = await window.electronAPI.getCommitDifference('https://github.com/writedan/divine-office-frontend', 'frontend');
 
-    console.log('checkUpdates', backendBehind, frontendBehind);
     setUpdateSplash((backendBehind.success && backendBehind.behind) + (frontendBehind.success && frontendBehind.behind));
     if (!frontendBehind.success) {
-      console.log('checkUpdates', 'critical!');
       setUpdateSplash('!');
     }
   };
 
-  useEffect(() => console.log('updated updateSplash', updateSplash), [updateSplash]);
   useEffect(() => {
     checkUpdates();
   }, []);
