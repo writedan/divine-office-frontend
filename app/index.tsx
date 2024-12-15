@@ -69,12 +69,10 @@ const MainContent = () => {
 };
 
 const NavBar = ({}) => {
-
   const { currentPage, goto } = useNavigation();
 
   const NavItem = ({ type, icon, label, goto }) => {
     const [isHovered, setIsHovered] = React.useState(false);
-
     const isActive = currentPage === label.toLowerCase();
 
     return (
@@ -103,8 +101,6 @@ const NavBar = ({}) => {
 
   if (currentPage === 'install-cargo' || currentPage === 'install-backend') return null;
 
-  console.log(currentPage);
-
   return (
     <View style={styles.navBar}>
       {currentPage != 'start-backend' && (
@@ -117,6 +113,7 @@ const NavBar = ({}) => {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   background: {
@@ -158,13 +155,11 @@ const styles = StyleSheet.create({
   },
   navItem: {
     alignItems: 'center',
+    padding: 15,
+    borderRadius: 10,
   },
   navItemActive: {
     backgroundColor: '#ebe4d8',
-    borderRadius: 10,
-    padding: 15,
-  },
-  navTextActive: {
   },
   navItemHovered: {
     transform: [{ scale: 1.1 }],
