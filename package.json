@@ -5,6 +5,7 @@
   "main": "expo-router/entry",
   "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
+  "productName": "Divine Office",
   "scripts": {
     "web": "expo start --web",
     "start": "expo start",
@@ -41,6 +42,8 @@
     "express": "^4.21.2",
     "fs": "^0.0.1-security",
     "https": "^1.0.0",
+    "node": "^23.4.0",
+    "npm": "^10.9.2",
     "os": "^0.1.2",
     "path": "^0.12.7",
     "portfinder": "^1.0.32",
@@ -73,7 +76,6 @@
   },
   "build": {
     "appId": "io.github.writedan.divineoffice",
-    "productName": "Divine Office",
     "files": [
       "web-build/**/*",
       "web-build/assets/**/*",

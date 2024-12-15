@@ -28,6 +28,8 @@ const isColorDark = (hexColor) => {
 const Calendar = ({ today }) => {
   const [identifiers, setIdentifiers] = useState({});
   const [currentDate, setCurrentDate] = useState(today);
+  const [reloadKey, setReloadKey] = useState(0);
+
   const { getMonthCalendar } = useApi();
   const { goto } = useNavigation();
 
@@ -44,10 +46,12 @@ const Calendar = ({ today }) => {
   };
 
   const handlePrevMonth = () => {
+    setReloadKey(reloadKey + 1);
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
   };
 
   const handleNextMonth = () => {
+    setReloadKey(reloadKey + 1);
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
   };
 
@@ -106,7 +110,7 @@ const Calendar = ({ today }) => {
   };
 
   return (
-    <AsyncCall message="Loading calendar..." call={load}>
+    <AsyncCall message="Loading calendar..." call={load} key={reloadKey}>
       <View style={styles.container}>
         <View style={styles.stickyHeader}>
           <Pressable onPress={handlePrevMonth} style={styles.navButton}>

@@ -66,3 +66,72 @@ ipcMain.handle('start-backend', async (event) => {
     return { success: false, error: error.message };
   }
 });
+
+ipcMain.handle('npm-package-project', async (event, projectPath) => {
+    try {
+        projectPath = path.join(app.getPath('userData'), projectPath);
+
+        const npmPath = `"${path.join(process.cwd(), 'node_modules', '.bin', 'npm')}"`;
+        logMessage("npm-package-project", "Using npm from:", npmPath);
+
+        const spawnNpmProcess = (args) => {
+            const npmProcess = spawn(npmPath, args, {
+                cwd: projectPath,
+                env: process.env,
+                shell: true
+            });
+
+            let output = '';
+
+            npmProcess.stdout.on('data', (data) => {
+                const message = data.toString();
+                output += message;
+                logMessage("npm-package-project", message);
+            });
+
+            npmProcess.stderr.on('data', (data) => {
+                const message = data.toString();
+                output += message;
+                logMessage("npm-package-project", message);
+            });
+
+            return new Promise((resolve, reject) => {
+                npmProcess.on('close', (code) => {
+                    if (code !== 0) {
+                        reject({ success: false, error: `Process exited with code ${code}` });
+                    } else {
+                        resolve({ success: true });
+                    }
+                });
+
+                npmProcess.on('error', (error) => {
+                    reject({ success: false, error: error.message });
+                });
+            });
+        };
+
+        logMessage("npm-package-project", "Starting npm install...");
+        const installResult = await spawnNpmProcess(['install', '--loglevel verbose']);
+        if (!installResult.success) {
+            throw new Error(`npm install failed: ${installResult.error}`);
+        }
+
+        logMessage("npm-package-project", "Starting npm run package...");
+        const packageResult = await spawnNpmProcess(['run', 'package']);
+        if (!packageResult.success) {
+            throw new Error(`npm run package failed: ${packageResult.error}`);
+        }
+
+        return {
+            success: true,
+            message: 'Project successfully installed and packaged'
+        };
+
+    } catch (error) {
+        logMessage("npm-package-project", "Process failed:", JSON.stringify(error, null, 2));
+        return {
+            success: false,
+            error: error
+        };
+    }
+});

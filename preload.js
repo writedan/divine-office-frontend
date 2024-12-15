@@ -23,4 +23,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	// utils/build-utils.js
 	startBackend: () => ipcRenderer.invoke('start-backend'),
+	packageFrontend: (projectPath) => ipcRenderer.invoke('npm-package-project', projectPath),
 });
