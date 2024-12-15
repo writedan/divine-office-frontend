@@ -8,7 +8,7 @@
   "scripts": {
     "web": "expo start --web",
     "start": "expo start",
-    "package": "expo export -p web --output-dir web-build",
+    "package": "expo export -p web --output-dir web-build && node separateAssets.js",
     "lint": "expo lint",
     "electron": "electron main.js",
     "build": "electron-builder",
@@ -80,8 +80,8 @@
       "package.json",
       "main.js",
       "utils/**/*",
-      "web-build/assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/**/*",
       "preload.js",
+      "assets/**/*",
       "**/*"
     ]
   }

@@ -55,14 +55,18 @@ app.on('ready', () => {
   const localIP = getLocalIPAddress(); 
   const serverApp = express();
 
-  let webBuildPath;
+  let webBuildPath, assetsPath;
+
   if (fs.existsSync(path.join(app.getPath('userData'), 'frontend', 'web-build'))) {
-    webBuildPath = path.join(path.join(app.getPath('userData'), 'frontend', 'web-build'));
+    webBuildPath = path.join(app.getPath('userData'), 'frontend', 'web-build');
+    assetsPath = path.join(app.getPath('userData'), 'frontend', 'assets');
   } else {
     webBuildPath = path.join(__dirname, 'web-build');
+    assetsPath = path.join(__dirname, 'assets');
   }
 
   console.log('APP_DIR', webBuildPath);
+  console.log('ASSETS_DIR', assetsPath);
 
   serverApp.use((req, res, next) => {
     const rawPath = req.url;
@@ -74,38 +78,41 @@ app.on('ready', () => {
       normalizedPath,
       resolvedPath,
       webBuildPath,
-      exists: fs.existsSync(resolvedPath)
+      exists: fs.existsSync(resolvedPath),
     });
     
     next();
   });
 
+  serverApp.use('/assets', express.static(assetsPath));
+
   serverApp.use(express.static(webBuildPath));
-  console.log('assets', fs.existsSync(path.join(webBuildPath, 'assets')))
-  console.log('assets/node_modules', fs.existsSync(path.join(webBuildPath, 'assets', 'node_modules')));
-  console.log('assets/node_modules/@expo', fs.existsSync(path.join(webBuildPath, 'assets', 'node_modules', '@expo')))
 
   serverApp.use((req, res, next) => {
     const requestedPath = path.join(webBuildPath, req.url);
-        const fileExists = fs.existsSync(requestedPath);
-    
+    const assetPath = path.join(assetsPath, req.url.replace('/assets', ''));
+    const fileExistsInWebBuild = fs.existsSync(requestedPath);
+    const fileExistsInAssets = fs.existsSync(assetPath);
+
     console.log('404 Debug Info:', {
       url: req.url,
       method: req.method,
-      lookingIn: webBuildPath,
-      tryingToAccess: requestedPath,
-      fileExists: fileExists,
-      isDirectory: fileExists ? fs.statSync(requestedPath).isDirectory() : false,
+      lookingIn: req.url.startsWith('/assets') ? assetsPath : webBuildPath,
+      tryingToAccess: req.url.startsWith('/assets') ? assetPath : requestedPath,
+      fileExists: fileExistsInWebBuild || fileExistsInAssets,
+      isDirectory: (fileExistsInWebBuild || fileExistsInAssets)
+        ? fs.statSync(req.url.startsWith('/assets') ? assetPath : requestedPath).isDirectory()
+        : false,
       headers: req.headers,
-      body: req.body
+      body: req.body,
     });
 
-    if (!fileExists) {
+    if (!fileExistsInWebBuild && !fileExistsInAssets) {
       res.status(404).json({
         error: 'Not Found',
         message: `Resource not found: ${req.url}`,
-        searchedLocation: requestedPath,
-        fileExists: fileExists
+        searchedLocation: req.url.startsWith('/assets') ? assetPath : requestedPath,
+        fileExists: fileExistsInWebBuild || fileExistsInAssets,
       });
     } else {
       next();
@@ -116,7 +123,7 @@ app.on('ready', () => {
     console.error('Error:', err.stack);
     res.status(500).json({
       error: 'Internal Server Error',
-      message: err.message
+      message: err.message,
     });
   });
 
