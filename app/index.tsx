@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+
 import { NavigationProvider, useNavigation } from './Navigation';
 import { ApiControl } from './ApiControl';
 import { Geolocation } from './Geolocation';
@@ -71,28 +72,62 @@ const MainContent = () => {
 const NavBar = ({}) => {
   const { currentPage, goto } = useNavigation();
 
-  const NavItem = ({ type, icon, label, goto }) => {
+  const [updateSplash, setUpdateSplash] = useState(null);
+
+  const checkUpdates = async () => {
+    const backendBehind = await window.electronAPI.getCommitDifference('https://github.com/writedan/divine-office', 'backend');
+    const frontendBehind = await window.electronAPI.getCommitDifference('https://github.com/writedan/divine-office-frontend', 'frontend');
+
+    setUpdateSplash((backendBehind.success && backendBehind.behind) + (frontendBehind.success && frontendBehind.behind));
+    if (!frontendBehind.success) {
+      setUpdateSplash('!');
+    }
+  };
+
+  useEffect(() => checkUpdates, []);
+
+  const NavItem = ({ type, icon, label, goto, isActive, badge }) => {
     const [isHovered, setIsHovered] = React.useState(false);
-    const isActive = currentPage === label.toLowerCase();
 
     return (
       <Pressable
         style={[
           styles.navItem,
           isHovered && styles.navItemHovered,
-          isActive && styles.navItemActive, 
+          isActive && styles.navItemActive,
         ]}
         onPress={goto}
         onHoverIn={() => setIsHovered(true)}
         onHoverOut={() => setIsHovered(false)}
       >
-        {type === 'entypo' && (
-          <Entypo name={icon} size={30} color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} />
-        )}
-        {type === 'fontawesome' && (
-          <FontAwesome name={icon} size={30} color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} />
-        )}
-        <Text style={[styles.navText, isHovered && styles.navTextHovered, isActive && styles.navTextActive]}>
+        <View style={styles.iconContainer}>
+          {type === 'entypo' && (
+            <Entypo 
+              name={icon} 
+              size={30} 
+              color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} 
+            />
+          )}
+          {type === 'fontawesome' && (
+            <FontAwesome 
+              name={icon} 
+              size={30} 
+              color={isActive ? '#000' : isHovered ? '#333' : '#4a3c31'} 
+            />
+          )}
+          {badge && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{badge}</Text>
+            </View>
+          )}
+        </View>
+        <Text 
+          style={[
+            styles.navText, 
+            isHovered && styles.navTextHovered, 
+            isActive && styles.navTextActive
+          ]}
+        >
           {label}
         </Text>
       </Pressable>
@@ -105,11 +140,31 @@ const NavBar = ({}) => {
     <View style={styles.navBar}>
       {currentPage != 'start-backend' && (
         <>
-          <NavItem type="entypo" icon="calendar" label="Today" goto={() => goto('today', {date: new Date()})} />
-          <NavItem type="fontawesome" icon="calendar" label="Calendar" goto={() => goto('calendar', {today: new Date()})} />
+          <NavItem 
+            type="entypo" 
+            icon="calendar" 
+            label="Today" 
+            goto={() => goto('today', {date: new Date()})}
+            isActive={currentPage == 'today'}
+          />
+          <NavItem 
+            type="fontawesome" 
+            icon="calendar" 
+            label="Calendar" 
+            goto={() => goto('calendar', {today: new Date()})}
+            isActive={currentPage == 'calendar'}
+          />
         </>
       )}
-      <NavItem type="fontawesome" icon="refresh" label="Update" goto={() => goto('update')} />
+
+      <NavItem 
+        type="fontawesome" 
+        icon="refresh" 
+        label="Update" 
+        goto={() => goto('update')} 
+        isActive={currentPage == 'update'}
+        badge={updateSplash}
+      />
     </View>
   );
 }
@@ -164,6 +219,26 @@ const styles = StyleSheet.create({
   navItemHovered: {
     transform: [{ scale: 1.1 }],
   },
+  iconContainer: {
+    position: 'relative',
+  },
+  badge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#ff4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   navText: {
     color: '#4a3c31',
     marginTop: 5,
@@ -172,6 +247,9 @@ const styles = StyleSheet.create({
   },
   navTextHovered: {
     color: '#333',
+  },
+  navTextActive: {
+    color: '#000',
   },
 });
 
