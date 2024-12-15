@@ -10,6 +10,8 @@ const getDivineOfficePath = (subPath = '') => {
     return path.join(basePath, subPath);
 };
 
+console.log('USER_DATA_PATH', getDivineOfficePath());
+
 async function updateRepo(event, repoPath, subDir, branch = 'master') {
     try {
         const dirPath = path.resolve(getDivineOfficePath(subDir));

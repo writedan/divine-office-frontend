@@ -10,12 +10,19 @@ export const ApiControl = ({ children }) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1);
     const day = String(date.getDate());
-    const resp = await axios.get(`${apiUrl}/api/${year}-${month}-${day}/`);
+    const resp = await axios.get(`${apiUrl}/Identifiers/${year}-${month}-${day}`);
+    return resp.data;
+  }
+
+  const getMonthCalendar = async (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1);
+    const resp = await axios.get(`${apiUrl}/Identifiers/${year}-${month}`);
     return resp.data;
   }
 
   return (
-    <ApiContext.Provider value={{ apiUrl, setApiUrl, getMetadata }}>
+    <ApiContext.Provider value={{ apiUrl, setApiUrl, getMetadata, getMonthCalendar }}>
       {children}
     </ApiContext.Provider>
   );

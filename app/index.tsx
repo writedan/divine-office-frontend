@@ -12,6 +12,7 @@ import BackendInstaller from './pages/BackendInstaller';
 import StartServer from './pages/StartServer';
 import HoursPage from './pages/HoursPage';
 import UpdatePage from './pages/Updater';
+import CalendarPage from './pages/Calendar';
 
 const App = () => {
   return (
@@ -58,6 +59,10 @@ const MainContent = () => {
 
   if (currentPage == 'update') {
     return <UpdatePage />;
+  }
+
+  if (currentPage == 'calendar' && pageArgs.today) {
+    return <CalendarPage today={pageArgs.today} />;
   }
 
   return <Text>Requested page "{currentPage}" with args {JSON.stringify(pageArgs)} but no such identifier is registered.</Text>;
