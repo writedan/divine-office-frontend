@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator as RNActivityIndicator } from 'react-native';
 
 const AsyncCall = ({ call, message, children }) => {
-  const [running, setRunning] = useState(true);
+  const [running, setRunning] = useState(false);
 
   console.log('[AsyncCall init]', message, running);
 
@@ -10,6 +10,8 @@ const AsyncCall = ({ call, message, children }) => {
     console.log('[AsyncCall triggered]', message, running);
 
     const load = async () => {
+      //if (running) return;
+
       try {
         setRunning(true);
         console.log('[AsyncCall load]', message);
@@ -24,7 +26,7 @@ const AsyncCall = ({ call, message, children }) => {
     load(); 
 
     return () => setRunning(false); 
-  }, [call, message]); 
+  }, []); 
 
   return running ? (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

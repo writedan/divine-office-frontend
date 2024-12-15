@@ -28,13 +28,10 @@ const isColorDark = (hexColor) => {
 const Calendar = ({ today }) => {
   const [identifiers, setIdentifiers] = useState({});
   const [currentDate, setCurrentDate] = useState(today);
-  const [init, setInit] = useState(false);
   const { getMonthCalendar } = useApi();
   const { goto } = useNavigation();
 
   const load = async () => {
-    if (init) return;
-    setInit(true);
     setIdentifiers(await getMonthCalendar(currentDate));
   };
 
@@ -47,12 +44,10 @@ const Calendar = ({ today }) => {
   };
 
   const handlePrevMonth = () => {
-    setInit(false);
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
   };
 
   const handleNextMonth = () => {
-    setInit(false);
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
   };
 

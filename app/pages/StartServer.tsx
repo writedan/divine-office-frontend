@@ -8,14 +8,11 @@ import { useApi } from '../ApiControl';
 const StartServer = () => {
   const [err, setErr] = useState(null);
   const [running, setRunning] = useState(false);
-  const [init, setInit] = useState(false);
 
   const { goto } = useNavigation();
   const { setApiUrl } = useApi();
 
   async function launch() {
-    if (init) return;
-    setInit(true);
     const res = await window.electronAPI.startBackend();
     if (res.success) {
       setRunning(true);

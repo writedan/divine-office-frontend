@@ -7,7 +7,6 @@ import { useNavigation } from '../Navigation';
 const BackendInstaller = () => {
   const [backendInstalled, setBackendInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
-  const [init, setInit] = useState(false);
 
   const { goto } = useNavigation();
 
@@ -23,8 +22,6 @@ const BackendInstaller = () => {
   }
 
   async function install() {
-    if (init) return;
-    setInit(true);
     const res = await window.electronAPI.updateRepo('https://github.com/writedan/divine-office', 'backend');
     if (res.success) {
       goto('start-backend');
