@@ -28,7 +28,9 @@ function getLocalIPAddress() {
   }
   
   return 'localhost';
-}
+};
+
+const isForceLocal = process.argv.includes('--force-local');
 
 app.on('ready', () => {
   const localIP = getLocalIPAddress(); 
@@ -36,7 +38,9 @@ app.on('ready', () => {
 
   let webBuildPath, assetsPath;
 
-  if (fs.existsSync(path.join(app.getPath('userData'), 'frontend', 'web-build'))) {
+  console.log('forceLocaL?', isForceLocal);
+
+  if (!isForceLocal && fs.existsSync(path.join(app.getPath('userData'), 'frontend', 'web-build'))) {
     webBuildPath = path.join(app.getPath('userData'), 'frontend', 'web-build');
     assetsPath = path.join(app.getPath('userData'), 'frontend', 'assets');
   } else {

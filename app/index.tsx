@@ -165,7 +165,7 @@ const NavBar = ({}) => {
         label="Update" 
         goto={() => goto('update')} 
         isActive={currentPage == 'update'}
-        badge={updateSplash}
+        badge={updateSplash == 0 ? null : updateSplash}
       />
     </View>
   );
