@@ -1,8 +1,12 @@
 const { app, ipcMain } = require('electron');
-const { spawn } = require('child_process');
+const { execFile, spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const { logMessage } = require("./message-utils");
+const fs = require('fs');
+const fsExtra = require('fs-extra');
+const asar = require('asar');
+const isRunningInAsar = require('electron-is-running-in-asar');
 
 function getRustPath() {
     if (os.platform() === 'win32') {
@@ -67,36 +71,85 @@ ipcMain.handle('start-backend', async (event) => {
   }
 });
 
+function cloneModule(mod) {
+    const appPath = app.getAppPath();
+    const sourcePath = path.resolve(path.join(appPath, 'node_modules', mod));
+    const destPath = path.resolve(path.join(appPath, '..', 'resources', mod));
+    
+    try {
+        if (isRunningInAsar) {
+            const tempDir = path.join(appPath, '..', 'resources', 'temp');
+            fs.mkdirSync(tempDir, { recursive: true });
+
+            asar.extractAll(appPath, tempDir);
+            const extractedModulePath = path.join(tempDir, 'node_modules', mod);
+
+            fs.mkdirSync(path.dirname(destPath), { recursive: true });
+            copySync(extractedModulePath, destPath);
+        } else {
+            fs.accessSync(sourcePath, fs.constants.F_OK);
+            fs.mkdirSync(destPath, { recursive: true });
+            copySync(sourcePath, destPath);
+        }
+
+        return destPath;
+    } catch (err) {
+        console.error(`Error cloning module: ${err.message}`);
+        throw err;
+    }
+}
+
+function copySync(source, destination) {
+    const stats = fs.statSync(source);
+
+    if (stats.isDirectory()) {
+        fs.mkdirSync(destination, { recursive: true });
+
+        const files = fs.readdirSync(source);
+        files.forEach((file) => {
+            const currentSource = path.join(source, file);
+            const currentDestination = path.join(destination, file);
+            copySync(currentSource, currentDestination);
+        });
+    } else if (stats.isFile()) {
+        fs.copyFileSync(source, destination);
+    }
+}
+
+
 ipcMain.handle('npm-package-project', async (event, projectPath) => {
     try {
         projectPath = path.join(app.getPath('userData'), projectPath);
 
-        const npmPath = `"${path.join(process.cwd(), 'node_modules', '.bin', 'npm')}"`;
-        logMessage("npm-package-project", "Using npm from:", npmPath);
+        const nodeBinaryPath = path.join(app.getAppPath(), 'node_modules', 'node', 'bin', 'node');
+        logMessage('npm-package-project', 'Using node from:', nodeBinaryPath);
 
-        const spawnNpmProcess = (args) => {
-            const npmProcess = spawn(npmPath, args, {
-                cwd: projectPath,
-                env: process.env,
-                shell: true
-            });
+        logMessage('npm-package-project', 'Cloning npm binaries');
+        const npmBinaryPath = path.join(cloneModule('npm'), 'bin', 'npm-cli.js');
+        logMessage('npm-package-project', 'Using npm from: ', npmBinaryPath);
 
-            let output = '';
-
-            npmProcess.stdout.on('data', (data) => {
-                const message = data.toString();
-                output += message;
-                logMessage("npm-package-project", message);
-            });
-
-            npmProcess.stderr.on('data', (data) => {
-                const message = data.toString();
-                output += message;
-                logMessage("npm-package-project", message);
-            });
-
+        const execNpmProcess = (args) => {
             return new Promise((resolve, reject) => {
-                npmProcess.on('close', (code) => {
+                const child = execFile(nodeBinaryPath, [npmBinaryPath, ...args], {
+                    cwd: projectPath,
+                    env: process.env,
+                });
+
+                let output = '';
+
+                child.stdout.on('data', (data) => {
+                    const message = data.toString();
+                    output += message;
+                    logMessage("npm-package-project", message);
+                });
+
+                child.stderr.on('data', (data) => {
+                    const message = data.toString();
+                    output += message;
+                    logMessage("npm-package-project", message);
+                });
+
+                child.on('close', (code) => {
                     if (code !== 0) {
                         reject({ success: false, error: `Process exited with code ${code}` });
                     } else {
@@ -104,34 +157,34 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
                     }
                 });
 
-                npmProcess.on('error', (error) => {
+                child.on('error', (error) => {
                     reject({ success: false, error: error.message });
                 });
             });
         };
 
         logMessage("npm-package-project", "Starting npm install...");
-        const installResult = await spawnNpmProcess(['install', '--loglevel verbose']);
+        const installResult = await execNpmProcess(['install', '--loglevel', 'verbose']);
         if (!installResult.success) {
             throw new Error(`npm install failed: ${installResult.error}`);
         }
 
         logMessage("npm-package-project", "Starting npm run package...");
-        const packageResult = await spawnNpmProcess(['run', 'package']);
+        const packageResult = await execNpmProcess(['run', 'package']);
         if (!packageResult.success) {
             throw new Error(`npm run package failed: ${packageResult.error}`);
         }
 
         return {
             success: true,
-            message: 'Project successfully installed and packaged'
+            message: 'Project successfully installed and packaged',
         };
-
     } catch (error) {
+        console.error(error);
         logMessage("npm-package-project", "Process failed:", JSON.stringify(error, null, 2));
         return {
             success: false,
-            error: error
+            error: error.message || error,
         };
     }
 });

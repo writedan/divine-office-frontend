@@ -2,7 +2,7 @@
   "name": "divine-office-frontend",
   "private": true,
   "version": "0.0.1",
-  "main": "expo-router/entry",
+  "main": "main.js",
   "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
   "productName": "Divine Office",
@@ -22,9 +22,11 @@
     "@react-native-community/geolocation": "^3.4.0",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
+    "asar": "^3.2.0",
     "axios": "^1.7.9",
     "child_process": "^1.0.2",
     "detect-libc": "^2.0.3",
+    "electron-is-running-in-asar": "^1.0.0",
     "events": "^3.3.0",
     "expo": "~52.0.18",
     "expo-blur": "~14.0.1",
@@ -41,7 +43,9 @@
     "expo-web-browser": "~14.0.1",
     "express": "^4.21.2",
     "fs": "^0.0.1-security",
+    "fs-extra": "^11.2.0",
     "https": "^1.0.0",
+    "ncp": "^2.0.0",
     "node": "^23.4.0",
     "npm": "^10.9.2",
     "os": "^0.1.2",
@@ -85,6 +89,9 @@
       "preload.js",
       "assets/**/*",
       "**/*"
+    ],
+    "asarUnpack": [
+      "**/node_modules/.bin/npm"
     ]
   }
 }
