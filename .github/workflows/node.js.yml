@@ -1,67 +1,120 @@
 name: Build and Release
-
 on:
   push:
     tags:
       - 'v*'
 
 jobs:
-  build-macos:
-    runs-on: macos-latest
-
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      
+      - name: Get version from package.json
+        id: get_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
 
+  build-macos:
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16
-
+      
       - name: Install dependencies
         run: npm install
-
+      
       - name: Build app for macOS (arm64 and x64)
         run: npx electron-builder --mac --x64 --arm64
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload macOS builds
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./dist/*.dmg
+          asset_name: YourApp-${{ needs.create-release.outputs.version }}-mac.dmg
+          asset_content_type: application/octet-stream
 
   build-linux:
+    needs: create-release
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16
-
+      
       - name: Install dependencies
         run: npm install
-
+      
       - name: Build app for Linux (x64 and arm64)
         run: npx electron-builder --linux --x64 --arm64
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload Linux builds
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./dist/*.AppImage
+          asset_name: YourApp-${{ needs.create-release.outputs.version }}-linux.AppImage
+          asset_content_type: application/octet-stream
 
   build-windows:
+    needs: create-release
     runs-on: windows-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16
-
+      
       - name: Install dependencies
         run: npm install
-
+      
       - name: Build app for Windows (x64 and arm64)
         run: npx electron-builder --win --x64 --arm64
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload Windows builds
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./dist/*.exe
+          asset_name: YourApp-${{ needs.create-release.outputs.version }}-win.exe
+          asset_content_type: application/octet-stream
