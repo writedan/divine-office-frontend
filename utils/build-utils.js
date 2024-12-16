@@ -6,7 +6,6 @@ const { logMessage } = require("./message-utils");
 const fs = require('fs');
 const fsExtra = require('fs-extra');
 const asar = require('asar');
-const isRunningInAsar = require('electron-is-running-in-asar');
 
 function getRustPath() {
     if (os.platform() === 'win32') {
@@ -30,7 +29,6 @@ ipcMain.handle('start-backend', async (event) => {
     });
 
     app.on('before-quit', () => {
-      console.log('terminating cargo');
       if (cargoProcess) {
         console.log("erminating cargo process...", cargoProcess.kill('SIGTERM'));
       }
@@ -71,13 +69,19 @@ ipcMain.handle('start-backend', async (event) => {
   }
 });
 
+function isRunningInAsar() {
+    return app.getAppPath().includes(".asar");
+}
+
 function cloneModule(mod) {
     const appPath = app.getAppPath();
     const sourcePath = path.resolve(path.join(appPath, 'node_modules', mod));
-    const destPath = path.resolve(path.join(appPath, '..', 'resources', mod));
+    const destPath = path.resolve(path.join(appPath, '..', 'resources', 'node_modules', mod));
+
+    logMessage('npm-package-project', 'Are we in ASAR?', isRunningInAsar());
     
     try {
-        if (isRunningInAsar) {
+        if (isRunningInAsar()) {
             const tempDir = path.join(appPath, '..', 'resources', 'temp');
             fs.mkdirSync(tempDir, { recursive: true });
 
@@ -100,6 +104,7 @@ function cloneModule(mod) {
 }
 
 function copySync(source, destination) {
+    logMessage('npm-package-project', 'Cloning', source, 'to', destination);
     const stats = fs.statSync(source);
 
     if (stats.isDirectory()) {
@@ -128,10 +133,10 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
         const npmBinaryPath = path.join(cloneModule('npm'), 'bin', 'npm-cli.js');
         logMessage('npm-package-project', 'Using npm from: ', npmBinaryPath);
 
-        const execNpmProcess = (args) => {
+        const execProcess = (binary, args, cwd) => {
             return new Promise((resolve, reject) => {
-                const child = execFile(nodeBinaryPath, [npmBinaryPath, ...args], {
-                    cwd: projectPath,
+                const child = execFile(binary, args, {
+                    cwd,
                     env: process.env,
                 });
 
@@ -164,20 +169,27 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
         };
 
         logMessage("npm-package-project", "Starting npm install...");
-        const installResult = await execNpmProcess(['install', '--loglevel', 'verbose']);
+        const installResult = await execProcess(nodeBinaryPath, [npmBinaryPath, 'install', '--loglevel', 'verbose'], projectPath);
         if (!installResult.success) {
             throw new Error(`npm install failed: ${installResult.error}`);
         }
 
         logMessage("npm-package-project", "Starting npm run package...");
-        const packageResult = await execNpmProcess(['run', 'package']);
+        const packageResult = await execProcess(nodeBinaryPath, [npmBinaryPath, 'run', 'simple-package'], projectPath);
         if (!packageResult.success) {
             throw new Error(`npm run package failed: ${packageResult.error}`);
         }
 
+        logMessage("npm-package-project", "Running separateAssets.js...");
+        const separateAssetsPath = path.join(projectPath, 'separateAssets.js');
+        const separateAssetsResult = await execProcess(nodeBinaryPath, [separateAssetsPath], projectPath);
+        if (!separateAssetsResult.success) {
+            throw new Error(`Running separateAssets.js failed: ${separateAssetsResult.error}`);
+        }
+
         return {
             success: true,
-            message: 'Project successfully installed and packaged',
+            message: 'Project successfully installed, packaged, and assets separated',
         };
     } catch (error) {
         console.error(error);
