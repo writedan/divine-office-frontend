@@ -7,5 +7,5 @@ if (isElectron) {
   eval('require')('./app.js');
 } else {
   console.log('Packing or running electron app');
-  require('expo-router/entry');
+  require('./APP_ROOT.js');
 }
