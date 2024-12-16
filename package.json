@@ -92,7 +92,8 @@
       "**/*"
     ],
     "asarUnpack": [
-      "**/node_modules/.bin/npm"
+      "**/node_modules/npm/**/*",
+      "**/node_modules/node/**/*"
     ]
   }
 }

@@ -73,33 +73,15 @@ function isRunningInAsar() {
     return app.getAppPath().includes(".asar");
 }
 
+// this originally tried to clone modules out of the ASAR archive but we got nowhere
+// you MUST declare modules you need to "clone" in packages.json under "build.asarUnpack"
 function cloneModule(mod) {
     const appPath = app.getAppPath();
     const sourcePath = path.resolve(path.join(appPath, 'node_modules', mod));
-    const destPath = path.resolve(path.join(appPath, '..', 'resources', 'node_modules', mod));
-
-    logMessage('npm-package-project', 'Are we in ASAR?', isRunningInAsar());
-    
-    try {
-        if (isRunningInAsar()) {
-            const tempDir = path.join(appPath, '..', 'resources', 'temp');
-            fs.mkdirSync(tempDir, { recursive: true });
-
-            asar.extractAll(appPath, tempDir);
-            const extractedModulePath = path.join(tempDir, 'node_modules', mod);
-
-            fs.mkdirSync(path.dirname(destPath), { recursive: true });
-            copySync(extractedModulePath, destPath);
-        } else {
-            fs.accessSync(sourcePath, fs.constants.F_OK);
-            fs.mkdirSync(destPath, { recursive: true });
-            copySync(sourcePath, destPath);
-        }
-
-        return destPath;
-    } catch (err) {
-        console.error(`Error cloning module: ${err.message}`);
-        throw err;
+    if (isRunningInAsar()) {
+        return path.join(appPath, '..', 'app.asar.unpacked', 'node_modules', mod);
+    } else {
+        return sourcePath;
     }
 }
 
@@ -126,7 +108,7 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
     try {
         projectPath = path.join(app.getPath('userData'), projectPath);
 
-        const nodeBinaryPath = path.join(app.getAppPath(), 'node_modules', 'node', 'bin', 'node');
+        const nodeBinaryPath = path.join(cloneModule('node'), 'bin', 'node');
         logMessage('npm-package-project', 'Using node from:', nodeBinaryPath);
 
         logMessage('npm-package-project', 'Cloning npm binaries');
@@ -135,9 +117,15 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
 
         const execProcess = (binary, args, cwd) => {
             return new Promise((resolve, reject) => {
+                const customNodePath = path.dirname(binary);
+                const newPath = `${customNodePath}${path.delimiter}${process.env.PATH}`;
+
                 const child = execFile(binary, args, {
                     cwd,
-                    env: process.env,
+                    env: {
+                        ...process.env,
+                        PATH: newPath, 
+                    },
                 });
 
                 let output = '';
