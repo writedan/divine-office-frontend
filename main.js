@@ -4,7 +4,6 @@ const path = require('path');
 const express = require('express');
 const portfinder = require('portfinder');
 const EventEmitter = require('events');
-const fs = require('fs');
 
 require("./utils/rust-utils");
 require("./utils/git-utils");
@@ -40,9 +39,11 @@ app.on('ready', () => {
 
   console.log('forceLocaL?', isForceLocal);
 
-  if (!isForceLocal && fs.existsSync(path.join(app.getPath('userData'), 'frontend', 'web-build'))) {
-    webBuildPath = path.join(app.getPath('userData'), 'frontend', 'web-build');
-    assetsPath = path.join(app.getPath('userData'), 'frontend', 'assets');
+  if (!isForceLocal) {
+    if (require('fs').existsSync(path.join(app.getPath('userData'), 'frontend', 'web-build'))) {
+      webBuildPath = path.join(app.getPath('userData'), 'frontend', 'web-build');
+      assetsPath = path.join(app.getPath('userData'), 'frontend', 'assets');
+    }
   } else {
     webBuildPath = path.join(__dirname, 'web-build');
     assetsPath = path.join(__dirname, 'assets');
