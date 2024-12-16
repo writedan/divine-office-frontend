@@ -23,7 +23,7 @@ jobs:
       
       - name: Build and publish
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx electron-builder --mac --x64 --arm64 --publish always
 
   build-linux:
@@ -44,7 +44,7 @@ jobs:
       
       - name: Build and publish
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx electron-builder --linux --x64 --arm64 --publish always
 
   build-windows:
@@ -65,5 +65,5 @@ jobs:
       
       - name: Build and publish
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx electron-builder --win --x64 --arm64 --publish always
