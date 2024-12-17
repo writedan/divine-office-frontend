@@ -1,8 +1,8 @@
 {
   "name": "divine-office-frontend",
   "private": true,
-  "version": "0.0.5",
-  "main": "main.js",
+  "version": "0.0.6",
+  "main": "expo-router/entry",
   "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
   "productName": "Divine Office",
@@ -12,7 +12,7 @@
     "package": "expo export -p web --output-dir web-build && node separateAssets.js",
     "simple-package": "expo export -p web --output-dir web-build",
     "lint": "expo lint",
-    "electron": "ELECTRON_RUN=true electron main.js --force-local",
+    "electron": "ELECTRON_RUN=true electron main.js",
     "build": "ELECTRON_RUN=true electron-builder",
     "test": "jest"
   },
@@ -89,12 +89,14 @@
       "preload.js",
       "assets/**/*",
       "APP_ROOT.js",
-      "app.js",
       "**/*"
     ],
     "asarUnpack": [
       "**/node_modules/npm/**/*",
       "**/node_modules/node/**/*"
-    ]
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    }
   }
 }

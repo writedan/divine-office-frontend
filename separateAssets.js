@@ -51,10 +51,10 @@ function moveTtfFiles(source, destination) {
 }
 
 function editEntryJsFile(directory, assetsDestination) {
-  const entryJsFile = fs.readdirSync(directory).find(file => file.startsWith('main-') && file.endsWith('.js'));
+  const entryJsFile = fs.readdirSync(directory).find(file => file.startsWith('entry-') && file.endsWith('.js'));
 
   if (!entryJsFile) {
-    console.error('No "main-{hash}.js" file found.');
+    console.error('No "entry-{hash}.js" file found.');
     return;
   }
 
