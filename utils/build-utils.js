@@ -118,7 +118,10 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
         const execProcess = (binary, args, cwd) => {
             return new Promise((resolve, reject) => {
                 const customNodePath = path.dirname(binary);
-                const newPath = `${customNodePath}${path.delimiter}${process.env.PATH}`;
+                const newPath = `${customNodePath}${path.delimiter}${process.env.PATH}${path.delimiter}${path.dirname(npmBinaryPath)}`;
+
+                logMessage('npm-package-project', 'Running', binary, args.join(' '));
+                logMessage('npm-package-project', 'system path: ', newPath);
 
                 const child = execFile(binary, args, {
                     cwd,
