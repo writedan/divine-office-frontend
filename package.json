@@ -1,7 +1,7 @@
 {
   "name": "divine-office-frontend",
   "private": true,
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "expo-router/entry",
   "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
@@ -12,19 +12,19 @@
     "package": "expo export -p web --output-dir web-build && node separateAssets.js",
     "simple-package": "expo export -p web --output-dir web-build",
     "lint": "expo lint",
-    "electron": "ELECTRON_RUN=true electron main.js",
-    "build": "ELECTRON_RUN=true electron-builder",
+    "electron": "electron main.js",
+    "build": "electron-builder",
     "test": "jest"
   },
   "jest": {
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@react-native-community/geolocation": "^3.4.0",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
     "asar": "^3.2.0",
     "axios": "^1.7.9",
+    "call-bind": "^1.0.8",
     "call-bind-apply-helpers": "^1.0.1",
     "child_process": "^1.0.2",
     "detect-libc": "^2.0.3",
@@ -46,7 +46,6 @@
     "fs": "^0.0.1-security",
     "fs-extra": "^11.2.0",
     "https": "^1.0.0",
-    "ncp": "^2.0.0",
     "node": "^23.4.0",
     "npm": "^10.9.2",
     "os": "^0.1.2",
@@ -81,9 +80,11 @@
   },
   "build": {
     "appId": "io.github.writedan.divineoffice",
+    "asar": false,
     "files": [
       "web-build/**/*",
       "web-build/assets/**/*",
+      "node_modules/**/*",
       "package.json",
       "main.js",
       "utils/**/*",
@@ -91,10 +92,6 @@
       "assets/**/*",
       "APP_ROOT.js",
       "**/*"
-    ],
-    "asarUnpack": [
-      "**/node_modules/npm/**/*",
-      "**/node_modules/node/**/*"
     ],
     "extraMetadata": {
       "main": "main.js"
@@ -104,6 +101,9 @@
         "AppImage",
         "deb"
       ]
+    },
+    "win": {
+      "target": "nsis"
     }
   }
 }
