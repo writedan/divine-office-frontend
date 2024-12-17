@@ -119,15 +119,28 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
             return new Promise((resolve, reject) => {
                 const customNodePath = path.dirname(binary);
                 const newPath = `${customNodePath}${path.delimiter}${process.env.PATH}${path.delimiter}${path.dirname(npmBinaryPath)}`;
+                
+                // Only apply Rosetta fix for ARM macOS
+                const needsRosetta = process.platform === 'darwin' && 
+                                    process.arch === 'arm64' && 
+                                    path.basename(binary).includes('node');
 
-                logMessage('npm-package-project', 'Running', binary, args.join(' '));
+                let finalBinary = binary;
+                let finalArgs = args;
+                
+                if (needsRosetta) {
+                    finalBinary = '/usr/bin/arch';
+                    finalArgs = ['-x86_64', binary, ...args];
+                }
+
+                logMessage('npm-package-project', 'Running', finalBinary, finalArgs.join(' '));
                 logMessage('npm-package-project', 'system path: ', newPath);
-
-                const child = execFile(binary, args, {
+                
+                const child = execFile(finalBinary, finalArgs, {
                     cwd,
                     env: {
                         ...process.env,
-                        PATH: newPath, 
+                        PATH: newPath,
                     },
                 });
 
