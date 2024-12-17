@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     permissions:
       contents: write
     steps:
@@ -26,10 +26,12 @@ jobs:
       - name: Package application
         run: npm run package
       
-      - name: Build and publish
+      - name: Build and publish (Universal Mac)
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx electron-builder --mac --x64 --arm64 --publish always
+        with:
+          artifactName: 'app-mac-universal-${{ github.run_id }}'
 
   build-linux:
     runs-on: ubuntu-latest
@@ -52,10 +54,12 @@ jobs:
       - name: Package application
         run: npm run package
       
-      - name: Build and publish
+      - name: Build and publish (Linux)
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx electron-builder --linux --x64 --arm64 --publish always
+        with:
+          artifactName: 'app-linux-${{ github.run_id }}'
 
   build-windows:
     runs-on: windows-latest
@@ -78,7 +82,37 @@ jobs:
       - name: Package application
         run: npm run package
       
-      - name: Build and publish
+      - name: Build and publish (Windows)
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx electron-builder --win --x64 --arm64 --publish always
+        with:
+          artifactName: 'app-win-${{ github.run_id }}'
+
+  build-intel-macos:
+    runs-on: macos-13
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install undici@5.28.2 --save-exact
+
+      - name: Package application
+        run: npm run package
+      
+      - name: Build and publish (Intel Mac)
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx electron-builder --mac --x64 --publish always
+        with:
+          artifactName: 'app-mac-intel-${{ github.run_id }}'
