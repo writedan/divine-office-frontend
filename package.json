@@ -13,7 +13,7 @@
     "simple-package": "expo export -p web --output-dir web-build",
     "lint": "expo lint",
     "electron": "electron main.js",
-    "build": "electron-builder",
+    "build": "electron-builder --config build-config.js",
     "test": "jest"
   },
   "jest": {
@@ -80,39 +80,5 @@
     "jest-expo": "~52.0.2",
     "react-test-renderer": "18.3.1",
     "typescript": "^5.7.2"
-  },
-  "build": {
-    "appId": "io.github.writedan.divineoffice",
-    "files": [
-      "web-build/**/*",
-      "web-build/assets/**/*",
-      "node_modules/**/*",
-      "package.json",
-      "main.js",
-      "utils/**/*",
-      "preload.js",
-      "assets/**/*",
-      "APP_ROOT.js",
-      "**/*"
-    ],
-    "extraMetadata": {
-      "main": "main.js"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ]
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "asarUnpack": [
-      "**/node_modules/npm/**/*",
-      "**/node_modules/node/**/*"
-    ]
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
