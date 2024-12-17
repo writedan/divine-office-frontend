@@ -27,7 +27,13 @@ function getTripleTarget() {
     let target = '';
 
     if (platform === 'win32') {
-        const abi = process.env.RUST_COMPILER_ABI || 'msvc';
+        // we should probably find a way to do this but 'msvc' requires 
+        /*** 
+         * please ensure that Visual Studio 2017 or later, or Build Tools for Visual Studio were installed with the Visual C++ option.
+         */ 
+        // so its a non-starter for simple UX
+
+        const abi = /* process.env.RUST_COMPILER_ABI || 'msvc' */ 'gnu';
         target = `${arch === 'x64' ? 'x86_64' : arch}-pc-windows-${abi}`;
     } else if (platform === 'darwin') {
         target = `${arch === 'x64' ? 'x86_64' : arch}-apple-darwin`;
@@ -79,19 +85,16 @@ async function downloadRustup(tripleTaget, destinationPath) {
     });
 }
 
-function installRustup(installerPath) {
+function execCmd(command, args) { 
     return new Promise((resolve, reject) => {
-        const command = `${installerPath}`;
-        const args = ['-y'];
-        
         const installer = spawn(command, args, { env });
 
         installer.stdout.on('data', (data) => {
-            logMessage('cargo-install', `stdout: ${data}`);
+            logMessage('cargo-install', String(data));
         });
 
         installer.stderr.on('data', (data) => {
-            logMessage('cargo-install', `stderr: ${data}`);
+            logMessage('cargo-install', String(data));
         });
 
         installer.on('close', (code) => {
@@ -102,6 +105,10 @@ function installRustup(installerPath) {
             }
         });
     });
+}
+
+function installRustup(installerPath) {
+    return execCmd(installerPath, ['-y']);
 }
 
 async function installCargo(event, tripleTarget) {
@@ -122,6 +129,17 @@ async function installCargo(event, tripleTarget) {
         }
 
         await installRustup(installerPath);
+
+        // see the note above in getTripleTarget() about the ABI -- this is a total hack solution
+        if (process.platform === 'win32') {
+            const target = getTripleTarget();
+            logMessage('cargo-install', '!!!! YOU ARE RUNNING WINDOWS !!!!');
+            logMessage('cargo-install', 'We are forced to substitute your actual target for GNU.');
+            logMessage('cargo-install', 'If this fails you will have to install cargo manually.');
+
+            await execCmd('rustup', ['toolchain', 'install', `stable-${target}`]);
+            await execCmd('rustup', ['default', `stable-${target}`]);
+        }
 
         return {
             success: true
