@@ -33,5 +33,13 @@ module.exports = {
   asarUnpack: [
     "**/node_modules/npm/**/*",
     "**/node_modules/node/**/*"
-  ]
+  ],
+
+  // disables blockmap generation
+  nsis: {
+    differentialPackage: false
+  },
+  dmg: {
+    writeUpdateInfo: false
+  }
 };
