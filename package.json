@@ -1,7 +1,7 @@
 {
   "name": "divine-office-frontend",
   "private": true,
-  "version": "0.0.8",
+  "version": "0.0.9",
   "main": "expo-router/entry",
   "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
@@ -80,7 +80,6 @@
   },
   "build": {
     "appId": "io.github.writedan.divineoffice",
-    "asar": false,
     "files": [
       "web-build/**/*",
       "web-build/assets/**/*",
@@ -104,6 +103,10 @@
     },
     "win": {
       "target": "nsis"
-    }
+    },
+    "asarUnpack": [
+      "**/node_modules/npm/**/*",
+      "**/node_modules/node/**/*"
+    ]
   }
 }

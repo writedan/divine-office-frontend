@@ -20,6 +20,9 @@ jobs:
       
       - name: Install dependencies
         run: npm install
+
+      - name: Package application
+        run: npm run package
       
       - name: Build and publish
         env:
@@ -41,6 +44,9 @@ jobs:
       
       - name: Install dependencies
         run: npm install
+
+      - name: Package application
+        run: npm run package
       
       - name: Build and publish
         env:
@@ -62,6 +68,9 @@ jobs:
       
       - name: Install dependencies
         run: npm install
+
+      - name: Package application
+        run: npm run package
       
       - name: Build and publish
         env:
