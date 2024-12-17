@@ -1,7 +1,7 @@
 {
   "name": "divine-office-frontend",
   "private": true,
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "expo-router/entry",
   "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
@@ -25,6 +25,7 @@
     "@react-navigation/native": "^7.0.0",
     "asar": "^3.2.0",
     "axios": "^1.7.9",
+    "call-bind-apply-helpers": "^1.0.1",
     "child_process": "^1.0.2",
     "detect-libc": "^2.0.3",
     "events": "^3.3.0",
@@ -99,7 +100,10 @@
       "main": "main.js"
     },
     "linux": {
-      "target": ["AppImage", "deb"]
+      "target": [
+        "AppImage",
+        "deb"
+      ]
     }
   }
 }
