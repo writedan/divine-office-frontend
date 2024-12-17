@@ -23,14 +23,14 @@ ipcMain.handle('start-backend', async (event) => {
     logMessage("start-backend", "Identified path", targetDir);
     
     const env = { ...process.env, PATH: `${getRustPath()}:${process.env.PATH}` };
-    const cargoProcess = spawn('cargo', ['run', '--release'], { 
+    const cargoProcess = spawn(path.join(getRustPath(), 'cargo'), ['run', '--release'], { 
       cwd: targetDir,
       env: env 
     });
 
     app.on('before-quit', () => {
       if (cargoProcess) {
-        console.log("erminating cargo process...", cargoProcess.kill('SIGTERM'));
+        console.log("Cargo kill success:", cargoProcess.kill('SIGTERM'));
       }
     });
 

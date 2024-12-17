@@ -49,18 +49,14 @@ function getTripleTarget() {
     return target;
 }
 
-function isCargoInstalled() {
-    logMessage('cargo-install', 'system environment:', env);
-    return new Promise((resolve) => {
-        exec('cargo --version', { env }, (error, stdout) => {
-            logMessage('cargo-install', error, stdout);
-            if (error) {
-                resolve(false);
-            } else {
-                resolve(true);
-            }
-        });
-    });
+async function isCargoInstalled() {
+    try {
+        await execCmd('cargo', ['--version']);
+        return true;
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
 }
 
 async function downloadRustup(tripleTaget, destinationPath) {
@@ -87,7 +83,46 @@ async function downloadRustup(tripleTaget, destinationPath) {
 
 function execCmd(command, args) { 
     return new Promise((resolve, reject) => {
-        const installer = spawn(command, args, { env });
+        const execPath = `${path.resolve(path.join(getRustPath(), command))}${process.platform === 'win32' ? '.exe' : ''}`;
+        logMessage('cargo-install', 'Running', execPath, args.join(' '));
+
+        if (!fs.existsSync(execPath)) {
+            reject(new Error("Execution failed because path does not exist."));
+            return;
+        }
+
+        const installer = spawn(execPath, args, { env });
+
+        installer.stdout.on('data', (data) => {
+            logMessage('cargo-install', String(data));
+        });
+
+        installer.stderr.on('data', (data) => {
+            logMessage('cargo-install', String(data));
+        });
+
+        installer.on('error', (err) => {
+            reject(new Error(`Spawn process failed: ${err.message}`));
+        });
+
+        installer.on('close', (code) => {
+            if (code === 0) {
+                resolve('Execution completed successfully.');
+            } else {
+                reject(new Error(`Execution failed with exit code ${code}.`));
+            }
+        });
+    });
+}
+
+function installRustup(installerPath) {
+    return new Promise((resolve, reject) => {
+        logMessage('cargo-install', 'Running', path.resolve(installerPath));
+        if (!fs.existsSync(path.resolve(installerPath))) {
+            reject(new Error("Execution failed because path does not exist."));
+        }
+
+        const installer = spawn(installerPath, ['-y'], { env });
 
         installer.stdout.on('data', (data) => {
             logMessage('cargo-install', String(data));
@@ -107,10 +142,6 @@ function execCmd(command, args) {
     });
 }
 
-function installRustup(installerPath) {
-    return execCmd(installerPath, ['-y']);
-}
-
 async function installCargo(event, tripleTarget) {
     try {
         const installerPath = path.join(os.tmpdir(), `rustup-init${process.platform === 'win32' ? '.exe' : ''}`);
@@ -121,6 +152,7 @@ async function installCargo(event, tripleTarget) {
             try {
                 fs.chmodSync(installerPath, 0o755);
             } catch (err) {
+                console.error(err);
                 return {
                     success: false,
                     error: `Failed to set executable permissions: ${err.message}`
@@ -145,6 +177,7 @@ async function installCargo(event, tripleTarget) {
             success: true
         };
     } catch (error) {
+        console.error(error);
         logMessage('cargo-install', error);
         return {
             success: false,
@@ -154,5 +187,12 @@ async function installCargo(event, tripleTarget) {
 };
 
 ipcMain.handle('rust-triple-target', getTripleTarget);
-ipcMain.handle('is-cargo-installed', isCargoInstalled);
+ipcMain.handle('is-cargo-installed', async (event) => {
+    try {
+        return (await isCargoInstalled());
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+});
 ipcMain.handle('install-cargo', installCargo);
