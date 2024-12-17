@@ -27,6 +27,7 @@ module.exports = {
     artifactName: "${productName}-${version}-win-installer-${platform}-${arch}.exe"
   },
   mac: {
+    target: "dmg",
     artifactName: "${productName}-${version}-mac-${platform}-${arch}.${ext}"
   },
   asarUnpack: [
