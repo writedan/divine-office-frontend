@@ -12,7 +12,7 @@
     "package": "expo export -p web --output-dir web-build && node separateAssets.js",
     "simple-package": "expo export -p web --output-dir web-build",
     "lint": "expo lint",
-    "electron": "electron main.js",
+    "electron": "electron main.js --force-local",
     "build": "electron-builder --config build-config.js",
     "test": "jest"
   },
