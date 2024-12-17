@@ -97,6 +97,9 @@
     ],
     "extraMetadata": {
       "main": "main.js"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"]
     }
   }
 }
