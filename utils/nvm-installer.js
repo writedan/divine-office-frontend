@@ -12,7 +12,7 @@ function execCmd(command, args=[]) {
     return new Promise((resolve, reject) => {
         logMessage('npm-install', 'Running', command, args.join(' '));
 
-        const exec = spawn(`"${command}"`, args, { shell: true });
+        const exec = spawn(command, args, { shell: true });
 
         exec.stdout.on('data', (data) => {
             logMessage('npm-install', String(data));
@@ -146,7 +146,7 @@ class NVMInstaller {
 
     try {
       // attempt to auto-accept values but fails
-      await execCmd(`powershell -Command "Start-Process '${setupPath}' -ArgumentList '/S', '/y' -Wait"`);
+      await execCmd(`powershell` ,[`-Command "Start-Process '${setupPath}' -ArgumentList '/S', '/y' -Wait"`]);
     } catch (error) {
       console.error('Error running the NVM Windows installer:', error);
       throw error;
@@ -157,7 +157,7 @@ class NVMInstaller {
 
   async installOnUnix(installerPath) {
     // i have no idea if this auto-accepts license or not
-    await execCmd(`bash ${installerPath} --skip-license`);
+    await execCmd(`bash` ,[`${installerPath} --skip-license`]);
   }
 
   async postInstall() {
