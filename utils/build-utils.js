@@ -167,7 +167,8 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
                 });
 
                 child.on('error', (error) => {
-                    reject({ success: false, error: error.message });
+                    console.error(error);
+                    reject({ success: false, error });
                 });
             });
         };
