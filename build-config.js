@@ -30,10 +30,6 @@ module.exports = {
     target: "dmg",
     artifactName: "${productName}-${version}-mac-${platform}-${arch}.${ext}"
   },
-  asarUnpack: [
-    "**/node_modules/npm/**/*",
-    "**/node_modules/node/**/*"
-  ],
 
   // disables blockmap generation
   nsis: {
