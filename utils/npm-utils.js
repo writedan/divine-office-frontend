@@ -45,15 +45,8 @@ async function enableNvm() {
 }
 
 async function isNpmInstalled() {
-    try {
-        logMessage('npm-install', 'isNpmInstalled initial check');
-        await execCmd('npm', ['--version']);
-        return true;
-    } catch (err) {
-        console.error(err);
-        const binaries = getDefaultBinaryPaths();
-        return binaries.npm.length > 0 && binaries.node.length > 0;
-    }
+    const binaries = getDefaultBinaryPaths();
+    return binaries.npm.length > 0 && binaries.node.length > 0;
 }
 
 function validateBinaryPath(pathToCheck) {
@@ -195,7 +188,7 @@ ipcMain.handle('is-npm-installed', async (event) => {
 });
 
 ipcMain.handle('run-nvm-installer', async (event) => {
-    await nvm.runNvmInstaller();
+    await runNvmInstaller();
 
     const verify = await isNpmInstalled();
     logMessage('npm-install', 'Install verification:', verify);
