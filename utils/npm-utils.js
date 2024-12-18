@@ -59,33 +59,31 @@ function validateBinaryPath(pathToCheck) {
 }
 
 function getExecutablePaths(possiblePaths) {
-    const expandedPaths = possiblePaths.flatMap(p => {
+    const expandedPaths = possiblePaths.flatMap((p) => {
         if (p.includes('*')) {
             try {
-                const baseDir = path.dirname(p.replace('*', ''));
+                const baseDir = String(p).split('*')[0];
                 if (!fs.existsSync(baseDir)) {
+                    console.log('getExecutablePaths baseDir does not exist', baseDir);
                     return [];
                 }
 
                 return fs.readdirSync(baseDir)
-                    .map(entry => path.join(baseDir, entry))
-                    .filter(fullPath => {
-                        const pattern = new RegExp(p.replace('*', '.*'));
-                        return pattern.test(fullPath);
-                    });
-            } catch(err) {
-                console.error(err);
+                    .filter((entry) => {
+                        const fullPath = String(p).replace("*", entry);
+                        return fs.statSync(fullPath).isFile();
+                    })
+                    .map((entry) => path.resolve(String(p).replace("*", entry)));
+            } catch (err) {
+                console.error(`Error processing wildcard path '${p}':`, err);
                 return [];
             }
         }
         return [p];
     });
 
-    return expandedPaths
-        .filter(p => fs.existsSync(p))
-        .map(p => path.resolve(p));
+    return expandedPaths.filter((p) => fs.existsSync(p));
 }
-
 
 function getDefaultBinaryPaths() {
     const platform = os.platform();

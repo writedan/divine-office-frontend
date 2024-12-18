@@ -163,7 +163,7 @@ class NVMInstaller {
   async postInstall() {
     if (this.platform === 'darwin' || this.platform === 'linux') {
       await execCmd('. ~/.nvm/nvm.sh && nvm install node --lts');
-      await execCmd('. ~/.nvm/nvm.sh && nvm on');
+      await execCmd('. ~/.nvm/nvm.sh use --lts');
     } else if (this.platform === 'win32') {
       await execCmd('nvm', ['install lts']);
       await execCmd('nvm', ['on']);
