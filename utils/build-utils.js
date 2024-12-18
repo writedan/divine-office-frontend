@@ -6,6 +6,7 @@ const { logMessage } = require("./message-utils");
 const fs = require('fs');
 const fsExtra = require('fs-extra');
 const asar = require('asar');
+const { getDefaultBinaryPaths } = require("./npm-utils");
 
 function getRustPath() {
     if (os.platform() === 'win32') {
@@ -107,7 +108,11 @@ function execCmd(command, args, cwd) {
     return new Promise((resolve, reject) => {
         logMessage('npm-package-project', 'Running', command, args.join(' '), 'at', path.resolve(cwd));
 
-        const exec = spawn(command, args, { shell: true, cwd });
+        const npmBinary = path.dirname(getDefaultBinaryPaths().npm[0]);
+        const nodeBinary = path.dirname(getDefaultBinaryPaths().node[0]);
+        const env = { ...process.env, PATH: `${npmBinary}${path.delimiter}${nodeBinary}${path.delimiter}${process.env.PATH}` };
+
+        const exec = spawn(`"${command}"`, args, { shell: true, cwd , env});
 
         exec.stdout.on('data', (data) => {
             logMessage('npm-package-project', String(data));
@@ -136,14 +141,14 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
     try {
         projectPath = path.join(app.getPath('userData'), projectPath);
         logMessage("npm-package-project", "Starting npm install...");
-        const installResult = await execCmd('npm', ['install', '--loglevel', 'verbose'], projectPath);
+        const installResult = await execCmd(getDefaultBinaryPaths().npm[0], ['install', '--loglevel', 'verbose'], projectPath);
 
         logMessage("npm-package-project", "Starting npm run package...");
-        const packageResult = await execCmd('npm', ['run', 'simple-package'], projectPath);
+        const packageResult = await execCmd(getDefaultBinaryPaths().npm[0], ['run', 'simple-package'], projectPath);
 
         logMessage("npm-package-project", "Running separateAssets.js...");
         const separateAssetsPath = path.join(projectPath, 'separateAssets.js');
-        const separateAssetsResult = await execCmd('node', [separateAssetsPath], projectPath);
+        const separateAssetsResult = await execCmd(getDefaultBinaryPaths().node[0], [separateAssetsPath], projectPath);
 
         return {
             success: true,

@@ -12,7 +12,7 @@ function execCmd(command, args=[]) {
     return new Promise((resolve, reject) => {
         logMessage('npm-install', 'Running', command, args.join(' '));
 
-        const exec = spawn(command, args, { shell: true });
+        const exec = spawn(`"${command}"`, args, { shell: true });
 
         exec.stdout.on('data', (data) => {
             logMessage('npm-install', String(data));

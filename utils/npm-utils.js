@@ -3,13 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const { ipcMain } = require('electron');
 const { logMessage } = require("./message-utils");
+const os = require("os");
 const { runNvmInstaller } = require("./nvm-installer");
 
 function execCmd(command, args) { 
     return new Promise((resolve, reject) => {
         logMessage('npm-install', 'Running', command, args.join(' '));
 
-        const exec = spawn(command, args, { shell: true });
+        const exec = spawn(`"${command}"`, args, { shell: true });
 
         exec.stdout.on('data', (data) => {
             logMessage('npm-install', String(data));
@@ -45,13 +46,142 @@ async function enableNvm() {
 
 async function isNpmInstalled() {
     try {
+        logMessage('npm-install', 'isNpmInstalled initial check');
         await execCmd('npm', ['--version']);
         return true;
     } catch (err) {
         console.error(err);
+        const binaries = getDefaultBinaryPaths();
+        return binaries.npm.length > 0 && binaries.node.length > 0;
+    }
+}
+
+function validateBinaryPath(pathToCheck) {
+    try {
+        const stats = fs.statSync(pathToCheck);
+        return stats.isFile();
+    } catch (error) {
         return false;
     }
 }
+
+function getExecutablePaths(possiblePaths) {
+    const expandedPaths = possiblePaths.flatMap(p => {
+        if (p.includes('*')) {
+            try {
+                return fs.readdirSync(path.dirname(p.replace('*', ''))).filter(dir => dir.match(/v\d+\.\d+\.\d+/)).map(dir => p.replace('*', dir));
+            } catch {
+                return [];
+            }
+        }
+        return [p];
+    });
+
+    return expandedPaths.filter(p => validateBinaryPath(p)).map(p => path.resolve(p));
+}
+
+function getDefaultBinaryPaths() {
+    const platform = os.platform();
+    const homeDir = os.homedir();
+
+    switch (platform) {
+        case 'darwin':
+            return {
+                node: getExecutablePaths([
+                    '/usr/local/bin/node',
+                    path.join(homeDir, '.nodenv/shims/node'),
+                    path.join(homeDir, '.nvm/versions/node/*/bin/node'),
+                    '/opt/homebrew/bin/node',
+                    '/usr/local/nodejs/bin/node'
+                ]),
+                npm: getExecutablePaths([
+                    '/usr/local/bin/npm',
+                    path.join(homeDir, '.nodenv/shims/npm'),
+                    path.join(homeDir, '.nvm/versions/node/*/bin/npm'),
+                    '/opt/homebrew/bin/npm',
+                    '/usr/local/nodejs/bin/npm'
+                ])
+            };
+
+        case 'linux':
+            return {
+                node: getExecutablePaths([
+                    '/usr/bin/node',
+                    path.join(homeDir, '.nodenv/shims/node'),
+                    path.join(homeDir, '.nvm/versions/node/*/bin/node'),
+                    '/usr/local/bin/node',
+                    '/opt/node/bin/node'
+                ]),
+                npm: getExecutablePaths([
+                    '/usr/bin/npm',
+                    path.join(homeDir, '.nodenv/shims/npm'),
+                    path.join(homeDir, '.nvm/versions/node/*/bin/npm'),
+                    '/usr/local/bin/npm',
+                    '/opt/node/bin/npm'
+                ])
+            };
+
+        case 'win32':
+            return {
+                node: getExecutablePaths([
+                    path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'nodejs\\node.exe'),
+                    path.join(process.env.LOCALAPPDATA || 'C:\\Users\\' + os.userInfo().username + '\\AppData\\Local', 'Programs\\nodejs\\node.exe'),
+                    path.join(process.env.USERPROFILE || 'C:\\Users\\' + os.userInfo().username, '.nvm\\nodejs\\node.exe'),
+                    'C:\\Program Files\\nodejs\\node.exe',
+                    'C:\\Program Files (x86)\\nodejs\\node.exe'
+                ]),
+                npm: getExecutablePaths([
+                    path.join(process.env.PROGRAMFILES || 'C:\\Program Files', 'nodejs\\npm'),
+                    path.join(process.env.LOCALAPPDATA || 'C:\\Users\\' + os.userInfo().username + '\\AppData\\Local', 'Programs\\nodejs\\npm'),
+                    path.join(process.env.USERPROFILE || 'C:\\Users\\' + os.userInfo().username, '.nvm\\nodejs\\npm'),
+                    'C:\\Program Files\\nodejs\\npm',
+                    'C:\\Program Files (x86)\\nodejs\\npm'
+                ])
+            };
+
+        default:
+            throw new Error(`Unsupported platform: ${platform}`);
+    }
+}
+
+function checkBinaryVersions(paths) {
+    const validBinaries = {};
+
+    for (const [type, binaryPaths] of Object.entries(paths)) {
+        validBinaries[type] = binaryPaths.map(binaryPath => {
+            try {
+                const { execSync } = require('child_process');
+                const version = execSync(`"${binaryPath}" --version`, { encoding: 'utf-8' }).trim();
+                
+                return {
+                    path: binaryPath,
+                    version: version
+                };
+            } catch (error) {
+                return null;
+            }
+        }).filter(Boolean);
+    }
+
+    return validBinaries;
+}
+
+try {
+    const existingPaths = getDefaultBinaryPaths();
+    console.log('Existing Node.js Paths:', existingPaths.node);
+    console.log('Existing npm Paths:', existingPaths.npm);
+
+    const versionedBinaries = checkBinaryVersions(existingPaths);
+    console.log('Validated Binaries:', JSON.stringify(versionedBinaries, null, 2));
+} catch (error) {
+    console.error('Error finding binary paths:', error.message);
+}
+
+module.exports = { 
+    getDefaultBinaryPaths, 
+    validateBinaryPath,
+    checkBinaryVersions 
+};
 
 ipcMain.handle('enable-nvm', enableNvm);
 ipcMain.handle('is-npm-installed', async (event) => {
@@ -63,4 +193,15 @@ ipcMain.handle('is-npm-installed', async (event) => {
 
     return await isNpmInstalled();
 });
-ipcMain.handle('run-nvm-installer', runNvmInstaller);
+
+ipcMain.handle('run-nvm-installer', async (event) => {
+    await nvm.runNvmInstaller();
+
+    const verify = await isNpmInstalled();
+    logMessage('npm-install', 'Install verification:', verify);
+    if (!verify) {
+        logMessage('npm-install', "Install verification failed. Please ensure npm is on your PATH or installed in the default location.");
+    }
+
+    return { success: verify };
+});
