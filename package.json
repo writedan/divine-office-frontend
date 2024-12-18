@@ -1,7 +1,7 @@
 {
   "name": "divine-office-frontend",
   "private": true,
-  "version": "0.0.17",
+  "version": "0.0.18",
   "main": "expo-router/entry",
   "author": "Daniel Write <daniel@writefamily.com>",
   "email": "daniel@writefamily.com",
