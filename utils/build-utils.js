@@ -103,94 +103,47 @@ function copySync(source, destination) {
     }
 }
 
+function execCmd(command, args, cwd) { 
+    return new Promise((resolve, reject) => {
+        logMessage('npm-package-project', 'Running', command, args.join(' '), 'at', path.resolve(cwd));
+
+        const exec = spawn(command, args, { shell: true, cwd });
+
+        exec.stdout.on('data', (data) => {
+            logMessage('npm-package-project', String(data));
+        });
+
+        exec.stderr.on('data', (data) => {
+            logMessage('npm-package-project', String(data));
+        });
+
+        exec.on('error', (err) => {
+            reject(new Error(`Spawn process failed: ${err.message}`));
+        });
+
+        exec.on('close', (code) => {
+            if (code === 0) {
+                resolve('Execution completed successfully.');
+            } else {
+                reject(new Error(`Execution failed with exit code ${code}.`));
+            }
+        });
+    });
+}
+
 
 ipcMain.handle('npm-package-project', async (event, projectPath) => {
     try {
         projectPath = path.join(app.getPath('userData'), projectPath);
-
-        const nodeBinaryPath = path.join(cloneModule('node'), 'bin', 'node');
-        logMessage('npm-package-project', 'Using node from:', nodeBinaryPath);
-
-        logMessage('npm-package-project', 'Cloning npm binaries');
-        const npmBinaryPath = path.join(cloneModule('npm'), 'bin', 'npm-cli.js');
-        logMessage('npm-package-project', 'Using npm from: ', npmBinaryPath);
-
-        const execProcess = (binary, args, cwd) => {
-            return new Promise((resolve, reject) => {
-                const customNodePath = path.dirname(binary);
-                const newPath = `${customNodePath}${path.delimiter}${process.env.PATH}${path.delimiter}${path.dirname(npmBinaryPath)}`;
-                
-                // Only apply Rosetta fix for ARM macOS
-                const needsRosetta = process.platform === 'darwin' && 
-                                    process.arch === 'arm64' && 
-                                    path.basename(binary).includes('node');
-
-                let finalBinary = binary;
-                let finalArgs = args;
-                
-                if (needsRosetta) {
-                    finalBinary = '/usr/bin/arch';
-                    finalArgs = ['-x86_64', binary, ...args];
-                }
-
-                logMessage('npm-package-project', 'Running', finalBinary, finalArgs.join(' '));
-                logMessage('npm-package-project', 'system path: ', newPath);
-                
-                const child = execFile(finalBinary, finalArgs, {
-                    cwd,
-                    env: {
-                        ...process.env,
-                        PATH: newPath,
-                    },
-                });
-
-                let output = '';
-
-                child.stdout.on('data', (data) => {
-                    const message = data.toString();
-                    output += message;
-                    logMessage("npm-package-project", message);
-                });
-
-                child.stderr.on('data', (data) => {
-                    const message = data.toString();
-                    output += message;
-                    logMessage("npm-package-project", message);
-                });
-
-                child.on('close', (code) => {
-                    if (code !== 0) {
-                        reject({ success: false, error: `Process exited with code ${code}` });
-                    } else {
-                        resolve({ success: true });
-                    }
-                });
-
-                child.on('error', (error) => {
-                    console.error(error);
-                    reject({ success: false, error });
-                });
-            });
-        };
-
         logMessage("npm-package-project", "Starting npm install...");
-        const installResult = await execProcess(nodeBinaryPath, [npmBinaryPath, 'install', '--loglevel', 'verbose'], projectPath);
-        if (!installResult.success) {
-            throw new Error(`npm install failed: ${installResult.error}`);
-        }
+        const installResult = await execCmd('npm', ['install', '--loglevel', 'verbose'], projectPath);
 
         logMessage("npm-package-project", "Starting npm run package...");
-        const packageResult = await execProcess(nodeBinaryPath, [npmBinaryPath, 'run', 'simple-package'], projectPath);
-        if (!packageResult.success) {
-            throw new Error(`npm run package failed: ${packageResult.error}`);
-        }
+        const packageResult = await execCmd('npm', ['run', 'simple-package'], projectPath);
 
         logMessage("npm-package-project", "Running separateAssets.js...");
         const separateAssetsPath = path.join(projectPath, 'separateAssets.js');
-        const separateAssetsResult = await execProcess(nodeBinaryPath, [separateAssetsPath], projectPath);
-        if (!separateAssetsResult.success) {
-            throw new Error(`Running separateAssets.js failed: ${separateAssetsResult.error}`);
-        }
+        const separateAssetsResult = await execCmd('node', [separateAssetsPath], projectPath);
 
         return {
             success: true,
@@ -201,7 +154,7 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
         logMessage("npm-package-project", "Process failed:", JSON.stringify(error, null, 2));
         return {
             success: false,
-            error: error.message || error,
+            error
         };
     }
 });

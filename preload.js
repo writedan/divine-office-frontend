@@ -24,4 +24,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	// utils/build-utils.js
 	startBackend: () => ipcRenderer.invoke('start-backend'),
 	packageFrontend: (projectPath) => ipcRenderer.invoke('npm-package-project', projectPath),
+
+	// utils/npm=utils.js
+	isNpmInstalled: () => ipcRenderer.invoke('is-npm-installed'),
+	enableNpm: () => ipcRenderer.invoke('enable-nvm'),
+	runNvmInstaller: () => ipcRenderer.invoke('run-nvm-installer'),
 });

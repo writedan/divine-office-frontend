@@ -10,6 +10,7 @@ require("./utils/rust-utils");
 require("./utils/git-utils");
 require("./utils/build-utils");
 require("./utils/url-utils");
+require("./utils/npm-utils");
 
 class MainProcessEmitter extends EventEmitter {}
 const mainEmitter = new MainProcessEmitter();

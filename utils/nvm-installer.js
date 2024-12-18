@@ -2,10 +2,39 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
 const AdmZip = require('adm-zip');
 const stream = require('stream');
 const util = require('util');
+const { logMessage } = require("./message-utils");
+
+function execCmd(command, args=[]) { 
+    return new Promise((resolve, reject) => {
+        logMessage('npm-install', 'Running', command, args.join(' '));
+
+        const exec = spawn(command, args, { shell: true });
+
+        exec.stdout.on('data', (data) => {
+            logMessage('npm-install', String(data));
+        });
+
+        exec.stderr.on('data', (data) => {
+            logMessage('npm-install', String(data));
+        });
+
+        exec.on('error', (err) => {
+            reject(new Error(`Spawn process failed: ${err.message}`));
+        });
+
+        exec.on('close', (code) => {
+            if (code === 0) {
+                resolve('Execution completed successfully.');
+            } else {
+                reject(new Error(`Execution failed with exit code ${code}.`));
+            }
+        });
+    });
+}
 
 class NVMInstaller {
   constructor() {
@@ -43,10 +72,10 @@ class NVMInstaller {
   }
 
   async downloadInstaller(url) {
-    console.log(`Downloading NVM from: ${url}`);
+    logMessage('npm-install', `Downloading NVM from: ${url}`);
     const filename = path.basename(url);
     const dest = path.join(os.tmpdir(), filename);
-    console.log('Saving to:', dest);
+    logMessage('npm-install', 'Saving to:', dest);
 
     try {
       const response = await axios({
@@ -66,7 +95,7 @@ class NVMInstaller {
       const finished = util.promisify(stream.finished);
       await finished(writer);
 
-      console.log(`Download complete: ${dest}`);
+      logMessage('npm-install', `Download complete: ${dest}`);
       return dest;
     } catch (error) {
       console.error('Error downloading the installer:', error);
@@ -76,8 +105,8 @@ class NVMInstaller {
 
   async install(installerPath) {
     try {
-      console.log('Starting NVM installation...');
-      console.log('Path:', installerPath);
+      logMessage('npm-install', 'Starting NVM installation...');
+      logMessage('npm-install', 'Installer path:', installerPath);
 
       switch (this.platform) {
         case 'win32':
@@ -85,16 +114,16 @@ class NVMInstaller {
           break;
         case 'darwin':
         case 'linux':
-          this.installOnUnix(installerPath);
+          await this.installOnUnix(installerPath);
           break;
         default:
           throw new Error(`Installation not supported on ${this.platform}`);
       }
 
-      console.log('NVM installation completed successfully!');
+      logMessage('npm-install', 'NVM installation completed successfully!');
     } catch (error) {
       console.error('NVM installation failed:', error);
-      process.exit(1);
+      throw error;
     }
   }
 
@@ -117,7 +146,7 @@ class NVMInstaller {
 
     try {
       // attempt to auto-accept values but fails
-      execSync(`powershell -Command "Start-Process '${setupPath}' -ArgumentList '/S', '/y' -Wait"`, { stdio: 'inherit' });
+      await execCmd(`powershell -Command "Start-Process '${setupPath}' -ArgumentList '/S', '/y' -Wait"`);
     } catch (error) {
       console.error('Error running the NVM Windows installer:', error);
       throw error;
@@ -126,16 +155,16 @@ class NVMInstaller {
     fs.rmSync(extractDir, { recursive: true, force: true });
   }
 
-  installOnUnix(installerPath) {
+  async installOnUnix(installerPath) {
     // i have no idea if this auto-accepts license or not
-    execSync(`bash ${installerPath} --skip-license`, { stdio: 'inherit' });
+    await execCmd(`bash ${installerPath} --skip-license`);
   }
 
-  postInstall() {
+  async postInstall() {
     if (this.platform === 'darwin' || this.platform === 'linux') {
-      execSync('. ~/.nvm/nvm.sh && nvm install node --lts', { stdio: 'inherit', shell: '/bin/bash' });
+      await execCmd('. ~/.nvm/nvm.sh && nvm install node --lts');
     } else if (this.platform === 'win32') {
-      execSync('nvm install lts', { stdio: 'inherit' });
+      await execCmd('nvm', ['install lts']);
     }
   }
 
@@ -144,25 +173,23 @@ class NVMInstaller {
       const url = this.getNVMDownloadURL();
       const installerPath = await this.downloadInstaller(url);
       await this.install(installerPath);
-      this.postInstall();
+      await this.postInstall();
     } catch (error) {
       console.error('Installation process failed:', error);
-      process.exit(1);
+      throw error;
     }
   }
 }
 
-async function main() {
+async function runNvmInstaller() {
   try {
-    require.resolve('adm-zip');
-  } catch (error) {
-    console.error('Missing required npm package. Please run:');
-    console.error('npm install adm-zip');
-    process.exit(1);
+    const installer = new NVMInstaller();
+    await installer.run();
+  } catch (err) {
+    console.error(err);
+    logMessage('npm-install', 'Error occured in installation:', err);
+    throw err;
   }
-
-  const installer = new NVMInstaller();
-  await installer.run();
 }
 
-main();
+module.exports = { runNvmInstaller };

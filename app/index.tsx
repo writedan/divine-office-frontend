@@ -14,6 +14,7 @@ import StartServer from './pages/StartServer';
 import HoursPage from './pages/HoursPage';
 import UpdatePage from './pages/Updater';
 import CalendarPage from './pages/Calendar';
+import NpmInstaller from './pages/NpmInstaller';
 
 const App = () => {
   return (
@@ -44,6 +45,10 @@ const MainContent = () => {
 
   if (currentPage == 'install-cargo') {
     return <CargoInstaller />;
+  }
+
+  if (currentPage == 'install-npm') {
+    return <NpmInstaller />;
   }
 
   if (currentPage == 'install-backend') {
