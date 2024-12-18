@@ -62,16 +62,30 @@ function getExecutablePaths(possiblePaths) {
     const expandedPaths = possiblePaths.flatMap(p => {
         if (p.includes('*')) {
             try {
-                return fs.readdirSync(path.dirname(p.replace('*', ''))).filter(dir => dir.match(/v\d+\.\d+\.\d+/)).map(dir => p.replace('*', dir));
-            } catch {
+                const baseDir = path.dirname(p.replace('*', ''));
+                if (!fs.existsSync(baseDir)) {
+                    return [];
+                }
+
+                return fs.readdirSync(baseDir)
+                    .map(entry => path.join(baseDir, entry))
+                    .filter(fullPath => {
+                        const pattern = new RegExp(p.replace('*', '.*'));
+                        return pattern.test(fullPath);
+                    });
+            } catch(err) {
+                console.error(err);
                 return [];
             }
         }
         return [p];
     });
 
-    return expandedPaths.filter(p => validateBinaryPath(p)).map(p => path.resolve(p));
+    return expandedPaths
+        .filter(p => fs.existsSync(p))
+        .map(p => path.resolve(p));
 }
+
 
 function getDefaultBinaryPaths() {
     const platform = os.platform();

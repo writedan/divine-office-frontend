@@ -148,7 +148,7 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
 
         logMessage("npm-package-project", "Running separateAssets.js...");
         const separateAssetsPath = path.join(projectPath, 'separateAssets.js');
-        const separateAssetsResult = await execCmd(getDefaultBinaryPaths().node[0], [separateAssetsPath], projectPath);
+        const separateAssetsResult = await execCmd(getDefaultBinaryPaths().node[0], [`"${separateAssetsPath}"`], projectPath);
 
         return {
             success: true,
