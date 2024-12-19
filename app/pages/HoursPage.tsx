@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import SunCalc from 'suncalc';
 import AsyncCall from '../components/AsyncCall';
-
 import { useGeolocation } from '../Geolocation';
 import { useApi } from '../ApiControl';
+import { useNavigation } from '../Navigation';
+import Icon from 'react-native-vector-icons/MaterialIcons'; 
 
 const colors = {
   White: '#ffffff',
@@ -16,28 +17,28 @@ const colors = {
   Rose: '#ff66b2',
 };
 
-const Hours = ({now}) => {
+const Hours = ({ now }) => {
   const [hours, setHours] = useState([]);
   const [today, setToday] = useState(null);
   const [tomorrow, setTomorrow] = useState(null);
   const [meals, setMeals] = useState({});
   const [hoveredRow, setHoveredRow] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [currentDate, setCurrentDate] = useState(now);
 
   const { getMetadata } = useApi();
-
   const { lat: latitude, lon: longitude } = useGeolocation();
+  const { goto } = useNavigation();
 
   const load = async () => {
     const fetchLiturgicalData = async () => {
-      const response = await getMetadata(now);
-      console.log('fetchLiturgicalData', response);
-
+      const response = await getMetadata(currentDate);
       setToday(response.today);
       setTomorrow(response.tomorrow);
     };
 
     const calculateHours = () => {
-      const times = SunCalc.getTimes(now, latitude, longitude);
+      const times = SunCalc.getTimes(currentDate, latitude, longitude);
       const daylightDuration = times.sunset - times.sunrise;
 
       const addSunlightHours = (startTime, fraction) => {
@@ -106,34 +107,60 @@ const Hours = ({now}) => {
     }
   };
 
-  const renderRow = (left, right) => (
-  	<Pressable
-  		style={[
-  			hoveredRow === left && styles.hoveredRow
-  		]}
-  		onHoverIn={() => setHoveredRow(left)}
-  		onHoverOut={() => setHoveredRow(null)}
-  	>
-	  	<View style={styles.row}>
-		  <Text style={[styles.column, styles.leftAlign]}>{left}</Text>
-		  <Text style={[styles.column, styles.rightAlign]}>
-		    {right}
-		  </Text>
-		</View>
-	</Pressable>
+  const renderRow = (left, right, goto) => (
+    <Pressable
+      style={[
+        hoveredRow === left && styles.hoveredRow
+      ]}
+      onHoverIn={() => setHoveredRow(left)}
+      onHoverOut={() => setHoveredRow(null)}
+      onPress={goto}
+    >
+      <View style={styles.row}>
+        <Text style={[styles.column, styles.leftAlign]}>{left}</Text>
+        <Text style={[styles.column, styles.rightAlign]}>
+          {right}
+        </Text>
+      </View>
+    </Pressable>
   );
 
+  const goToYesterday = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setCurrentDate(newDate);
+    setReloadKey(prevKey => prevKey + 1);
+  };
+
+  const goToTomorrow = () => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setCurrentDate(newDate);
+    setReloadKey(prevKey => prevKey + 1);
+  };
+
   return (
-    <AsyncCall call={load} message={"Fetch liturgical information..."}>
+    <AsyncCall call={load} message={"Fetch liturgical information..."} key={reloadKey}>
       <View style={{ width: '50%', marginLeft: '25%' }}>
-        {today && renderSection(today.name, today.color)}
+        <View style={styles.navContainer}>
+          <Pressable onPress={() => goToYesterday()}>
+            <Icon name="arrow-back" size={30} color={colors.Black} />
+          </Pressable>
+
+          {today && renderSection(today.name, today.color)}
+
+          <Pressable onPress={() => goToTomorrow()}>
+            <Icon name="arrow-forward" size={30} color={colors.Black} />
+          </Pressable>
+        </View>
+
         {today && renderPenanceMessage(today.penance)}
 
         <View style={styles.tableContainer}>
           {hours.map((hour, index) => {
             if (tomorrow && (hour.name == 'Vespers' || hour.name == 'Compline')) return null;
 
-            return renderRow(hour.name, formatTime(hour.time));
+            return renderRow(hour.name, formatTime(hour.time), () => goto('hour', {date: currentDate, hour: hour.name.toLowerCase()}));
           })}
         </View>
 
@@ -141,8 +168,8 @@ const Hours = ({now}) => {
 
         {tomorrow && (
           <View style={styles.tableContainer}>
-            {renderRow('First Vespers', formatTime(hours.find(h => h.name === 'Vespers')?.time))}
-            {renderRow('First Compline', formatTime(hours.find(h => h.name === 'Compline')?.time))}
+            {renderRow('First Vespers', formatTime(hours.find(h => h.name === 'Vespers')?.time), () => goto('hour', {date: currentDate, hour: 'vespers'}))}
+            {renderRow('First Compline', formatTime(hours.find(h => h.name === 'Compline')?.time), () => goto('hour', {date: currentDate, hour: 'compline'}))}
           </View>
         )}
       </View>
@@ -197,6 +224,12 @@ const styles = StyleSheet.create({
   hoveredRow: {
     backgroundColor: '#f4f0f8', 
     transition: 'all 0.2s ease',
+  },
+  navContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
 });
 

@@ -15,6 +15,7 @@ import HoursPage from './pages/HoursPage';
 import UpdatePage from './pages/Updater';
 import CalendarPage from './pages/Calendar';
 import NpmInstaller from './pages/NpmInstaller';
+import HourPage from './pages/Hour';
 
 const App = () => {
   return (
@@ -69,6 +70,10 @@ const MainContent = () => {
 
   if (currentPage == 'calendar' && pageArgs.today) {
     return <CalendarPage today={pageArgs.today} />;
+  }
+
+  if (currentPage == 'hour' && pageArgs.date && pageArgs.hour) {
+    return <HourPage date={pageArgs.date} hour={pageArgs.hour} />;
   }
 
   return <Text>Requested page "{currentPage}" with args {JSON.stringify(pageArgs)} but no such identifier is registered.</Text>;
