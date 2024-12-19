@@ -112,7 +112,7 @@ function execCmd(command, args, cwd) {
         const nodeBinary = path.dirname(getDefaultBinaryPaths().node[0]);
         const env = { ...process.env, PATH: `${npmBinary}${path.delimiter}${nodeBinary}${path.delimiter}${process.env.PATH}` };
 
-        const exec = spawn(`"${command}"`, args, { shell: true, cwd , env});
+        const exec = spawn(command, args, { shell: false, cwd , env});
 
         exec.stdout.on('data', (data) => {
             logMessage('npm-package-project', String(data));
@@ -148,7 +148,7 @@ ipcMain.handle('npm-package-project', async (event, projectPath) => {
 
         logMessage("npm-package-project", "Running separateAssets.js...");
         const separateAssetsPath = path.join(projectPath, 'separateAssets.js');
-        const separateAssetsResult = await execCmd(getDefaultBinaryPaths().node[0], [`"${separateAssetsPath}"`], projectPath);
+        const separateAssetsResult = await execCmd(getDefaultBinaryPaths().node[0], [separateAssetsPath], projectPath);
 
         return {
             success: true,

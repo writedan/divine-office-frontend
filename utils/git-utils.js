@@ -69,7 +69,7 @@ const getCommitDifference = async (repoPath, subDir, branch = 'master') => {
         const ahead = (await git.log([`${remoteBranch}..${localBranch}`])).total;
         const behind = (await git.log([`${localBranch}..${remoteBranch}`])).total;
 
-        logMessage('git-log', `Local branch is ${ahead} commits ahead and ${behind} commits behind the remote branch.`);
+        logMessage('git-log', `Local branch (${dirPath}) is ${ahead} commits ahead and ${behind} commits behind the remote branch.`);
 
         return { success: true, ahead, behind };
     } catch (error) {
