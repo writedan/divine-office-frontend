@@ -5,6 +5,14 @@ import * as exsurge from 'exsurge';
 import AsyncCall from '../components/AsyncCall';
 import { useApi } from '../ApiControl';
 
+const SmallPrint = /\{([^{}]*)\}/g;
+const Vowel = /([aeiouAEIOU])/g;
+const Y = /([yY])/g;
+const Intone = /\(([^()]*)\)/g;
+const Flex = /\^([^^]*)\^/g;
+const Mediant = /\~([^~]*)\~/g;
+const Accent = /\`([^`]*)\`/g;
+
 const Hour = ({ date, hour }) => {
   const [reloadKey, setReloadKey] = useState(0);
   const [elements, setElements] = useState([]);
@@ -65,16 +73,114 @@ const DOBox = ({ children }) => (
   </View>
 );
 
-const DOText = ({ value }) => (
-  <Text style={{ marginVertical: 6, fontSize: 16, color: '#4a3c31', fontFamily: 'serif' }}>{value}</Text>
-);
+const DOText = ({ value }) => {
+    const styles = {
+        italic: {
+            fontStyle: 'italic',
+            fontWeight: 'normal'
+        },
+        bold: {
+            fontStyle: 'normal',
+            fontWeight: 'bold'
+        },
+        underline: {
+            textDecorationLine: 'underline'
+        },
+        asterisk: {
+            color: 'red',
+            fontWeight: 'bold'
+        },
+        smallPrint: {
+            fontSize: 14,
+            color: 'red'
+        },
+        container: {
+            marginVertical: 6,
+            fontSize: 18,
+            color: '#4a3c31',
+            fontFamily: 'serif'
+        }
+    };
+
+    function styleFirstVowel(text, sym, style) {
+        const match = text.match(Vowel) || text.match(Y);
+        if (!match) return text;
+        const firstVowelIndex = text.indexOf(match[0]);
+        const before = text.slice(0, firstVowelIndex);
+        const vowel = match[0];
+        const after = text.slice(firstVowelIndex + 1);
+        return (
+            <Text style={style}>
+                {before}
+                <Text>
+                    {vowel}{sym}
+                </Text>
+                {after}
+            </Text>
+        );
+    }
+
+    function transformText(inputText) {
+        let elements = [];
+        inputText.split(/(\*|\+\+\+|\+|\{[^{}]*\}|\([^()]*\)|\^[^^]*\^|~[^~]*~|`[^`]*`)/).forEach((chunk, index) => {
+            if (chunk === "*") {
+                elements.push(
+                    <Text key={index} style={styles.asterisk}>
+                        *
+                    </Text>
+                );
+                elements.push('\n    ');
+            } else if (chunk === "+++") {
+                elements.push(
+                    <Text key={index} style={styles.asterisk}>
+                        ✠
+                    </Text>
+                );
+            } else if (chunk === "+") {
+                elements.push(
+                    <Text key={index} style={styles.asterisk}>
+                        +
+                    </Text>
+                );
+                elements.push('\n');
+            } else if (SmallPrint.test(chunk)) {
+                elements.push(
+                    <Text key={index} style={styles.smallPrint}>
+                        {chunk.replace(SmallPrint, '$1')}
+                    </Text>
+                );
+            } else if (Intone.test(chunk)) {
+                const group = chunk.replace(Intone, '$1');
+                elements.push(<Text key={index}>{styleFirstVowel(group, "\u030A", styles.underline)}</Text>);
+            } else if (Flex.test(chunk)) {
+                const group = chunk.replace(Flex, '$1');
+                elements.push(<Text key={index}>{styleFirstVowel(group, "\u0302", styles.italic)}</Text>);
+            } else if (Mediant.test(chunk)) {
+                const group = chunk.replace(Mediant, '$1');
+                elements.push(<Text key={index}>{styleFirstVowel(group, "\u0303", styles.underline)}</Text>);
+            } else if (Accent.test(chunk)) {
+                const group = chunk.replace(Accent, '$1');
+                elements.push(<Text key={index}>{styleFirstVowel(group, "\u0301", styles.bold)}</Text>);
+            } else {
+                elements.push(chunk);
+            }
+        });
+        return elements;
+    }
+
+    return (
+        <Text style={styles.container}>
+            {transformText(value)}
+        </Text>
+    );
+};
 
 const DOHeading = ({ text, level }) => {
   const styles = {
-    h1: { fontSize: 32, fontWeight: 'bold', marginVertical: 12, color: '#4a3c31', fontFamily: 'serif' },
-    h2: { fontSize: 28, fontWeight: 'bold', marginVertical: 10, color: '#4a3c31', fontFamily: 'serif' },
-    h3: { fontSize: 24, fontWeight: 'bold', marginVertical: 8, color: '#4a3c31', fontFamily: 'serif' },
-    default: { fontSize: 20, fontWeight: 'normal', marginVertical: 6, color: '#4a3c31', fontFamily: 'serif' },
+    h1: { fontSize: 36, fontWeight: 'bold', marginVertical: 12, color: '#4a3c31', fontFamily: 'serif' },
+    h2: { fontSize: 32, fontWeight: 'bold', marginVertical: 10, color: '#4a3c31', fontFamily: 'serif' },
+    h3: { fontSize: 28, fontWeight: 'bold', marginVertical: 8, color: '#4a3c31', fontFamily: 'serif' },
+    default: { fontSize: 24, fontWeight: 'normal', marginVertical: 6, color: '#4a3c31', fontFamily: 'serif' },
   };
 
   const headingStyle = styles[`h${level}`] || styles.default;
@@ -87,7 +193,7 @@ const DOHeading = ({ text, level }) => {
 };
 
 const DOInstruction = ({ value }) => (
-  <Text style={{ color: '#b22222', marginVertical: 6, fontSize: 16, fontStyle: 'italic', fontFamily: 'serif' }}>{value}</Text>
+  <Text style={{ color: '#b22222', marginVertical: 6, fontSize: 18, fontStyle: 'italic', fontFamily: 'serif' }}>{value}</Text>
 );
 
 const DOMusic = ({ value }) => {
@@ -124,8 +230,9 @@ const DOMusic = ({ value }) => {
 
 		const factor = 1.15;
 		const ctx = new exsurge.ChantContext();
-		const fontSize = 18;
+		const fontSize = 20;
 		const scaleFactor = (ctx.glyphScaling * fontSize * factor) / ctx.textStyles.lyric.size;
+		ctx.glyphScaling = ctx.glyphScaling * 1.33;
 
 		ctx.setFont("serif", (fontSize * factor));
 		ctx.markupSymbolDictionary['^'] = 'c';
@@ -224,7 +331,7 @@ const DOMusic = ({ value }) => {
 
 const DOTitle = ({ value }) => (
   <View style={{ marginVertical: 10 }}>
-    <Text style={{ fontWeight: 'bold', textAlign: 'center', fontSize: 18, color: '#4a3c31', fontFamily: 'serif' }}>
+    <Text style={{ fontWeight: 'bold', textAlign: 'center', fontSize: 20, color: '#4a3c31', fontFamily: 'serif' }}>
       {value}
       {!value.endsWith('.') && '.'}
     </Text>
@@ -242,9 +349,8 @@ const DOError = ({ value }) => (
       marginVertical: 10,
     }}
   >
-    <Text style={{ color: '#b22222', fontWeight: 'bold', fontSize: 16, fontFamily: 'serif' }}>{value}</Text>
+    <Text style={{ color: '#b22222', fontWeight: 'bold', fontSize: 18, fontFamily: 'serif' }}>{value}</Text>
   </View>
 );
-
 
 export default Hour;
