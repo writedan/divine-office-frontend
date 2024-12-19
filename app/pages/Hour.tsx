@@ -53,7 +53,14 @@ const Hour = ({ date, hour }) => {
 };
 
 const DOBox = ({ children }) => (
-  <View style={{ borderWidth: 1, borderColor: '#d1c7b7', padding: 12, marginVertical: 10, borderRadius: 8, backgroundColor: '#f8f5ec' }}>
+  <View style={{ 
+    borderWidth: 1, 
+    borderColor: '#d1c7b7', 
+    padding: 12, 
+    marginVertical: 10, 
+    borderRadius: 8, 
+    backgroundColor: '#f4efe4'
+  }}>
     {children}
   </View>
 );
