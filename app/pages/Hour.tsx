@@ -23,7 +23,6 @@ const Hour = ({ date, hour }) => {
 
   const convertElement = (element) => {
     const [type, value] = Object.entries(element)[0];
-    console.log(type, value);
     switch (type) {
       case 'Box':
         return <DOBox>{convertElements(value)}</DOBox>;
@@ -46,7 +45,7 @@ const Hour = ({ date, hour }) => {
 
   return (
     <AsyncCall call={load} message={"Loading liturgy"} key={reloadKey}>
-      <View style={{ flex: 1, padding: 16 }}>
+      <View style={{ flex: 1, padding: 16, width: '50%', marginLeft: '25%' }}>
         {convertElements(elements)}
       </View>
     </AsyncCall>
@@ -93,8 +92,12 @@ const DOInstruction = ({ value }) => (
 
 const DOMusic = ({ value }) => {
 	const element = useRef(null);
+	const [totalWidth, setTotalWidth] = useState(0);
 
 	useEffect(() => {
+		if (!element.current) return;
+		element.current.innerHTML = '';
+
 		function parseHeaders(lines) {
 	        const headerLines = lines.split('%%')[0].split('\n');
 	        const headerObject = {};
@@ -121,7 +124,7 @@ const DOMusic = ({ value }) => {
 
 		const factor = 1.15;
 		const ctx = new exsurge.ChantContext();
-		const fontSize = 16;
+		const fontSize = 18;
 		const scaleFactor = (ctx.glyphScaling * fontSize * factor) / ctx.textStyles.lyric.size;
 
 		ctx.setFont("serif", (fontSize * factor));
@@ -166,9 +169,10 @@ const DOMusic = ({ value }) => {
 	    }
 
 	    score.updateNotations(ctx);
+	    element.current.innerHTML = '';
 
 	    score.performLayoutAsync(ctx, async function(){
-	        await score.layoutChantLines(ctx, 1000, async function(){
+	        await score.layoutChantLines(ctx, totalWidth, async function(){
 	            let svg = await score.createSvgNode(ctx);
 	            let extraMargin = false;
 	            let toChange = [];
@@ -176,7 +180,6 @@ const DOMusic = ({ value }) => {
 	                toChange.push(e);
 	                if (e.textContent.startsWith("$")) {
 	                    extraMargin = true;
-	                    element.classList.add("extra-margin");
 	                }
 	            }
 
@@ -195,20 +198,28 @@ const DOMusic = ({ value }) => {
 	                    e.children[0].style.fontSize = "75%";
 	                    if (!extraMargin) {
 	                        e.setAttribute('y', parseFloat(e.getAttribute('y')) + offset);
-	                        element.classList.add("reduce-margin");
 	                    }
 
 	                }
 	            }
 
+	            element.current.innerHTML = '';
 	            element.current.appendChild(svg);
-	        })
+	        });
 	    });
-	}, []);
 
-    return (
-    	<div ref={element}></div>
-    );
+	    return () => {
+        if (element.current) {
+            element.current.innerHTML = '';
+        }
+    	};
+	}, [totalWidth]);
+
+  return (
+  	<View onLayout={(e) => setTotalWidth(e.nativeEvent.layout.width)}>
+  		<div ref={element}></div>
+  	</View>
+  );
 };
 
 const DOTitle = ({ value }) => (
