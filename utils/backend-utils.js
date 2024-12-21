@@ -18,7 +18,7 @@ function startBackend(event) {
   let url = null;
 
   return new Promise(async (resolve, reject) => {
-    execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], [], {}, (data) => {
+    execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], ["--resources", app.getAppPath()], {}, (data) => {
       output += String(data);
       const match = output.match(/https?:\/\/[^\s]+/);
       if (match && !url) {
