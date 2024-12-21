@@ -16,7 +16,14 @@ function startBackend(event) {
   let output = '';
   let url = null;
 
-  return new Promise((resolve) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], ['--update']);
+    } catch (error) {
+      resolve({ success: false, error: error.message });
+      return;
+    }
+
     execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], [], {}, (data) => {
       output += String(data);
       const match = output.match(/https?:\/\/[^\s]+/);
@@ -28,7 +35,7 @@ function startBackend(event) {
     }).catch((error) => {
       logMessage('start-backend', error);
       event.sender.send('cargo-err', { error: error.message });
-      resolve({ success: false, error: error.message });
+      resolve({ success: false, error: error });
     });
     
     resolve({ success: true });

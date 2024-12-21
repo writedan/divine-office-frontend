@@ -18,7 +18,6 @@ function execCmd(stream, command, args, opts, onData) {
 	return new Promise((resolve, reject) => {	
 		const exec = spawn(command, args, opts);
         logMessage(stream, '[spawn]', exec);
-        logMessage(stream, 'onData set?', onData? true : false);
 
 		exec.stdout.on('data', (data) => {
             logMessage(stream, String(data));

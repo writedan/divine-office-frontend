@@ -24,6 +24,7 @@ const StartServer = () => {
   }
 
   function handleError(_event, err) {
+    console.error(err);
     setErr(err.error);
     setRunning(false);
   }
@@ -51,7 +52,7 @@ const StartServer = () => {
         <EndpointLog stream="start-backend" />
         <AsyncCall call={launch} message="Launching backend"/>
         {err && <Text style={styles.errorMessage}>
-          Failed to launch backend: {err}.
+          Failed to launch backend: {err}
         </Text>}
         {running && <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#0000ff" />

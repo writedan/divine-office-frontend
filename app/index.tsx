@@ -168,15 +168,6 @@ const NavBar = ({}) => {
           />
         </>
       )}
-
-      <NavItem 
-        type="fontawesome" 
-        icon="refresh" 
-        label="Update" 
-        goto={() => goto('update')} 
-        isActive={currentPage == 'update'}
-        badge={updateSplash == 0 ? null : updateSplash}
-      />
     </View>
   );
 }
