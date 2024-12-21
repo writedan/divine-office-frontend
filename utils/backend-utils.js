@@ -1,6 +1,7 @@
 const { logMessage } = require("./message-utils");
 const { getDefaultBinaryPaths, execCmd } = require("./exec-utils");
-const { ipcMain } = require("electron");
+const { ipcMain, app } = require("electron");
+const path = require("path");
 
 async function updateBackend() {
 	try {
@@ -16,15 +17,17 @@ function startBackend(event) {
   let output = '';
   let url = null;
 
+  const resourcesPath = path.resolve(path.join(app.getAppPath(), 'backend-resources'));
+
   return new Promise(async (resolve, reject) => {
     try {
-      await execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], ['--update']);
+      await execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], ['--update', resourcesPath]);
     } catch (error) {
       resolve({ success: false, error: error.message });
       return;
     }
 
-    execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], [], {}, (data) => {
+    execCmd('start-backend', getDefaultBinaryPaths().divineOffice[0], ['--resources', resourcesPath], {}, (data) => {
       output += String(data);
       const match = output.match(/https?:\/\/[^\s]+/);
       if (match && !url) {
