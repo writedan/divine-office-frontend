@@ -19,6 +19,7 @@ function execCmd(command, args) {
         exec.stderr.on('data', (data) => {
             logMessage('npm-install', String(data));
         });
+        
 
         exec.on('error', (err) => {
             reject(new Error(`Spawn process failed: ${err.message}`));
