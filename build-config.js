@@ -31,6 +31,9 @@ module.exports = {
     artifactName: "${productName}-${version}-mac-${platform}-${arch}.${ext}"
   },
 
+  // disable asar packaging to enable updates via the backend later
+  asar: false,
+
   // disables blockmap generation
   nsis: {
     differentialPackage: false

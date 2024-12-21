@@ -6,70 +6,51 @@ import { useNavigation } from '../Navigation';
 
 const BackendInstaller = () => {
   const [backendInstalled, setBackendInstalled] = useState(false);
-  const [installing, setInstalling] = useState(false);
+  const [installing, setInstalling] = useState(true);
   const [installReloadKey, setInstallReloadKey] = useState(0);
 
   const { goto } = useNavigation();
 
-  async function check() {
-    const res = await window.electronAPI.fileExists('backend');
-
-    if (res) {
-      goto('start-backend');
-      return;
-    }
-
-    setBackendInstalled(await window.electronAPI.fileExists('backend'));
-  }
-
   async function install() {
-    console.log('install');
-    const res = await window.electronAPI.updateRepo('https://github.com/writedan/divine-office', 'backend');
-    console.log('install', res);
+    const res = await window.electronAPI.updateBackend();
     if (res.success) {
       goto('start-backend');
+    } else {
+      setBackendInstalled(res.installed);
     }
   }
 
-  function handleInstall() {
-    setInstalling(true);
-    setInstallReloadKey(installReloadKey + 1);
-  }
+  const continueOn = () => {
+    goto('start-backend');
+  };
 
   return (
     <View style={styles.container}>
-      {installing ? (
-        <View style={styles.content}>
-          <EndpointLog stream="git-log" />
-          <AsyncCall call={install} message="Installing Backend" key={installReloadKey}>
-            <Text style={styles.errorMessage}>
-              Backend installation failed.
-            </Text>
-          </AsyncCall>
-        </View>
-      ) : (
-        <View style={styles.content}>
-          <Text style={styles.title}>Backend Installation</Text>
-          <AsyncCall call={check} message="Checking for backend installation">
-            {backendInstalled ? (
-              <Text style={styles.message}>Backend is already installed!</Text>
-            ) : (
-              <View>
+      <View style={styles.content}>
+        <Text style={styles.title}>Automatic Updates</Text>
+        <EndpointLog stream="install-log" />
+        <AsyncCall call={install} message="Installing backend (this can take a few minutes)" key={installReloadKey}>
+          <Text style={styles.errorMessage}>
+            Backend installation failed. {!backendInstalled && "We did not detect a previous installation."}
+          </Text>
+          <View style={{ flex: 1, marginTop: 15 }}>
+            {backendInstalled && (
+              <>
                 <Text style={styles.message}>
-                  This application requires a backend to function. We did not detect it on your system.
+                  You had previously installed the backend. While updates failed you may continue to use the previous version.
                 </Text>
                 <TouchableOpacity
                   style={styles.button}
-                  onPress={handleInstall}
+                  onPress={continueOn}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.buttonText}>Install Backend</Text>
+                  <Text style={styles.buttonText}>Continue</Text>
                 </TouchableOpacity>
-              </View>
+              </>
             )}
-          </AsyncCall>
-        </View>
-      )}
+          </View>
+        </AsyncCall>
+      </View>
     </View>
   );
 };

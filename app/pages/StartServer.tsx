@@ -14,24 +14,35 @@ const StartServer = () => {
 
   async function launch() {
     const res = await window.electronAPI.startBackend();
+    console.log('launch', res);
     if (res.success) {
       setRunning(true);
     } else {
+      setRunning(false);
       setErr(res.error);
     }
   }
 
-  useEffect(() => {
-    window.electronAPI.on("cargo-err", (_event, err) => {
-      setErr(err);
-      setRunning(false);
-    });
+  function handleError(_event, err) {
+    setErr(err.error);
+    setRunning(false);
+  }
 
-    window.electronAPI.on("cargo-url", (_event, obj) => {
-      setRunning(false);
-      setApiUrl(obj.url);
-      goto('today', {date: new Date()});
-    })
+  function handleUrl(_event, obj) {
+    setRunning(false);
+    setApiUrl(obj.url);
+    goto('today', {date: new Date()});
+  }
+
+  useEffect(() => {
+    window.electronAPI.on("cargo-err", handleError);
+
+    window.electronAPI.on("cargo-url", handleUrl);
+
+    return () => {
+      window.electronAPI.removeListener("cargo-err", handleError);
+      window.electronAPI.removeListener("cargo-url", handleUrl);
+    };
   }, []);
 
   return (
@@ -44,8 +55,7 @@ const StartServer = () => {
         </Text>}
         {running && <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#0000ff" />
-          <Text>Building backend...</Text>
-          <Text>This can take up to a few minutes.</Text>
+          <Text>Launching backend...</Text>
         </View>}
       </View>
     </View>

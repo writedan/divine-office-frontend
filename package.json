@@ -51,6 +51,8 @@
     "fs": "^0.0.1-security",
     "fs-extra": "^11.2.0",
     "https": "^1.0.0",
+    "isomorphic-git": "^1.27.2",
+    "node-fetch": "^3.3.2",
     "os": "^0.1.2",
     "path": "^0.12.7",
     "portfinder": "^1.0.32",

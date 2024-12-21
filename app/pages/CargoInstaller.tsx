@@ -15,7 +15,7 @@ const CargoInstaller = () => {
     const res = await window.electronAPI.isCargoInstalled();
 
     if (res) {
-      goto('install-npm');
+      goto('install-backend');
       return;
     }
 
@@ -23,10 +23,9 @@ const CargoInstaller = () => {
   }
 
   async function install() {
-    const target = await window.electronAPI.getRustTripleTarget();
-    const res = await window.electronAPI.installCargo(target);
+    const res = await window.electronAPI.installCargo();
     if (res.success) {
-      goto('install-npm');
+      goto('install-backend');
     }
   }
 

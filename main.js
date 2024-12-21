@@ -6,11 +6,9 @@ const portfinder = require('portfinder');
 const EventEmitter = require('events');
 const fs = require('fs');
 
+require("./utils/exec-utils");
 require("./utils/rust-utils");
-require("./utils/git-utils");
-require("./utils/build-utils");
-require("./utils/url-utils");
-require("./utils/npm-utils");
+require("./utils/backend-utils");
 
 class MainProcessEmitter extends EventEmitter {}
 const mainEmitter = new MainProcessEmitter();
@@ -31,7 +29,7 @@ function getLocalIPAddress() {
   return 'localhost';
 };
 
-const isForceLocal = process.argv.includes('--force-local');
+const isForceLocal = /*process.argv.includes('--force-local');*/ true;
 
 app.on('ready', () => {
   const localIP = getLocalIPAddress(); 

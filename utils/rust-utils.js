@@ -1,24 +1,10 @@
-const { ipcMain } = require('electron');
-const os = require('os');
-const process = require('process');
-const { isMusl } = require('detect-libc');
+const { getDefaultBinaryPaths, execCmd } = require("./exec-utils");
 const { logMessage } = require("./message-utils");
-const { exec, spawn } = require("child_process"); 
+const { ipcMain } = require("electron");
 const path = require("path");
+const os = require("os");
 const fs = require("fs");
-const https = require("https");
-
-function getRustPath() {
-    if (os.platform() === 'win32') {
-        return process.env.USERPROFILE + '\\.cargo\\bin';
-    } else if (os.platform() === 'darwin' || os.platform() === 'linux') {
-        return path.join(os.homedir(), '.cargo', 'bin'); 
-    }
-    return ''; 
-}
-
-// ensure we have the system's path variables
-const env = { ...process.env, PATH: `${getRustPath()}:${process.env.PATH}` };
+const axios = require("axios");
 
 function getTripleTarget() {
     const platform = process.platform;
@@ -49,100 +35,43 @@ function getTripleTarget() {
     return target;
 }
 
-async function isCargoInstalled() {
+async function downloadRustup(tripleTaget, destinationPath) {
+    const url = `https://static.rust-lang.org/rustup/dist/${tripleTaget}/rustup-init${process.platform === 'win32' ? '.exe' : ''}`;
+    logMessage('cargo-install', 'Saving', url, 'to', destinationPath);
+    const writer = fs.createWriteStream(destinationPath);
+
     try {
-        await execCmd('cargo', ['--version']);
-        return true;
+        const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream',
+        });
+
+        response.data.pipe(writer);
+
+        return new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', (err) => {
+                fs.unlink(destinationPath, () => reject(err));
+            });
+        });
     } catch (err) {
-        console.error(err);
-        return false;
+        fs.unlink(destinationPath, () => { throw err });
     }
 }
 
-async function downloadRustup(tripleTaget, destinationPath) {
-    return new Promise((resolve, reject) => {
-        const url = `https://static.rust-lang.org/rustup/dist/${tripleTaget}/rustup-init${process.platform === 'win32' ? '.exe' : ''}`;
-        logMessage('cargo-install', 'Saving', url, 'to', destinationPath);
-        const file = fs.createWriteStream(destinationPath);
-
-        https.get(url, (response) => {
-            if (response.statusCode !== 200) {
-                reject(new Error(`Failed to download: ${url} (status code: ${response.statusCode})`));
-                return;
-            }
-
-            response.pipe(file);
-            file.on('finish', () => {
-                file.close(resolve);
-            });
-        }).on('error', (err) => {
-            fs.unlink(destinationPath, () => reject(err));
-        });
-    });
+async function installRustup(installerPath, tripleTarget) {
+    return (await execCmd('cargo-install', installerPath, ['-y', '--default-toolchain', `stable-${tripleTarget}`]));
 }
 
-function execCmd(command, args) { 
-    return new Promise((resolve, reject) => {
-        const execPath = `${path.resolve(path.join(getRustPath(), command))}${process.platform === 'win32' ? '.exe' : ''}`;
-        logMessage('cargo-install', 'Running', execPath, args.join(' '));
+async function installCargo() {
+	const tripleTarget = getTripleTarget();
+	if (process.platform === 'win32') {
+		logMessage('cargo-install', '!!!! WARNING !!!!');
+		logMessage('cargo-install', 'You are running Windows, which is supposed to use the MSVC ABI. We have substituted in the GNU ABI, since MSVC depends upon Visual Code.');
+		logMessage('cargo-install', 'If this fails, you must manually install cargo and Visual Code.');
+	}
 
-        if (!fs.existsSync(execPath)) {
-            reject(new Error("Execution failed because path does not exist."));
-            return;
-        }
-
-        const installer = spawn(execPath, args, { env });
-
-        installer.stdout.on('data', (data) => {
-            logMessage('cargo-install', String(data));
-        });
-
-        installer.stderr.on('data', (data) => {
-            logMessage('cargo-install', String(data));
-        });
-
-        installer.on('error', (err) => {
-            reject(new Error(`Spawn process failed: ${err.message}`));
-        });
-
-        installer.on('close', (code) => {
-            if (code === 0) {
-                resolve('Execution completed successfully.');
-            } else {
-                reject(new Error(`Execution failed with exit code ${code}.`));
-            }
-        });
-    });
-}
-
-function installRustup(installerPath) {
-    return new Promise((resolve, reject) => {
-        logMessage('cargo-install', 'Running', path.resolve(installerPath));
-        if (!fs.existsSync(path.resolve(installerPath))) {
-            reject(new Error("Execution failed because path does not exist."));
-        }
-
-        const installer = spawn(installerPath, ['-y'], { env });
-
-        installer.stdout.on('data', (data) => {
-            logMessage('cargo-install', String(data));
-        });
-
-        installer.stderr.on('data', (data) => {
-            logMessage('cargo-install', String(data));
-        });
-
-        installer.on('close', (code) => {
-            if (code === 0) {
-                resolve('Installation completed successfully.');
-            } else {
-                reject(new Error(`Installation failed with exit code ${code}.`));
-            }
-        });
-    });
-}
-
-async function installCargo(event, tripleTarget) {
     try {
         const installerPath = path.join(os.tmpdir(), `rustup-init${process.platform === 'win32' ? '.exe' : ''}`);
 
@@ -160,18 +89,7 @@ async function installCargo(event, tripleTarget) {
             }
         }
 
-        await installRustup(installerPath);
-
-        // see the note above in getTripleTarget() about the ABI -- this is a total hack solution
-        if (process.platform === 'win32') {
-            const target = getTripleTarget();
-            logMessage('cargo-install', '!!!! YOU ARE RUNNING WINDOWS !!!!');
-            logMessage('cargo-install', 'We are forced to substitute your actual target for GNU.');
-            logMessage('cargo-install', 'If this fails you will have to install cargo manually.');
-
-            await execCmd('rustup', ['toolchain', 'install', `stable-${target}`]);
-            await execCmd('rustup', ['default', `stable-${target}`]);
-        }
+        await installRustup(installerPath, tripleTarget);
 
         return {
             success: true
@@ -181,18 +99,11 @@ async function installCargo(event, tripleTarget) {
         logMessage('cargo-install', error);
         return {
             success: false,
-            error: error.message
+            error
         };
     }
 };
 
 ipcMain.handle('rust-triple-target', getTripleTarget);
-ipcMain.handle('is-cargo-installed', async (event) => {
-    try {
-        return (await isCargoInstalled());
-    } catch (err) {
-        console.error(err);
-        return false;
-    }
-});
-ipcMain.handle('install-cargo', installCargo);
+ipcMain.handle("is-cargo-installed", (e) => getDefaultBinaryPaths().cargo.length > 0);
+ipcMain.handle('install-cargo', (e) => installCargo());
